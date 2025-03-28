@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "599424177128",
+    "project_id": "smart-fiance-tracker",
+    "storage_bucket": "smart-fiance-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599424177128:android:62c66c705d081fb08eca5d",
+        "android_client_info": {
+          "package_name": "com.example.smartfianacetracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDklA5y8uGPIdIftAyoXNIhswBZfGdLO_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
