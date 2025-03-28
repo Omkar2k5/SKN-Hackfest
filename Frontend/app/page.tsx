@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, BarChart3, Brain, CreditCard, PiggyBank } from "lucide-react"
+import { ArrowRight, BarChart3, Brain, CreditCard, PiggyBank, TrendingUp } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +28,9 @@ export default function HomePage() {
             <Link href="/dashboard" className="text-sm font-medium hover:underline underline-offset-4">
               Dashboard
             </Link>
+            <Link href="/portfolio" className="text-sm font-medium hover:underline underline-offset-4">
+              Portfolio
+            </Link>
             <Link href="/fingpt" className="text-sm font-medium hover:underline underline-offset-4">
               FinGPT
             </Link>
@@ -53,6 +56,11 @@ export default function HomePage() {
                 <Link href="/dashboard">
                   <Button size="lg" className="gap-1.5">
                     Get Started <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/portfolio">
+                  <Button size="lg" variant="outline" className="gap-1.5">
+                    View Portfolio <TrendingUp className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -86,7 +94,7 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-12 mt-12">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-4 lg:gap-12 mt-12">
             <Card className="border-0 shadow-md">
               <CardHeader className="pb-2">
                 <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -123,6 +131,19 @@ export default function HomePage() {
               <CardContent>
                 <p className="text-sm text-gray-500">
                   Get personalized financial insights and recommendations based on your spending habits.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md">
+              <CardHeader className="pb-2">
+                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Crypto Portfolio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500">
+                  Track your cryptocurrency investments and monitor real-time portfolio performance.
                 </p>
               </CardContent>
             </Card>

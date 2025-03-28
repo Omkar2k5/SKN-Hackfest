@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { IndianRupee, Download, Filter, Calendar } from "lucide-react"
+import { IndianRupee, Download } from "lucide-react"
 import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
@@ -109,14 +109,6 @@ export default function ReportsPage() {
               <p className="text-muted-foreground">View and analyze your financial data</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="mr-2 h-4 w-4" />
-                Date Range
-              </Button>
               <Button size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Export

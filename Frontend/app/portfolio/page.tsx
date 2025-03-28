@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { IndianRupee, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCcw } from "lucide-react"
-import crypto from 'crypto'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,49 +25,33 @@ export default function PortfolioPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
-  const API_KEY = "0115b23fb95bda0834b6f7435cf470be1bf9829549666528"
-  const API_SECRET = "d2cc46961dadcb55d0b83a1163b977a9a737ab7b0c676237f508d8a0ed2714a2"
-
-  const generateSignature = (body: string, timestamp: number) => {
-    const payload = body + timestamp
-    return crypto
-      .createHmac('sha256', API_SECRET)
-      .update(payload)
-      .digest('hex')
-  }
-
   const fetchPortfolio = async () => {
     try {
       setIsLoading(true)
-      const timestamp = Date.now()
-      const body = "" // Empty string for GET requests
-      const signature = generateSignature(body, timestamp)
-
-      // Fetch balances
-      const balanceResponse = await fetch('https://api.coindcx.com/exchange/v1/users/balances', {
+      
+      const response = await fetch('/api/portfolio', {
         method: 'GET',
         headers: {
-          'X-AUTH-APIKEY': API_KEY,
-          'X-AUTH-SIGNATURE': signature,
-          'X-AUTH-TIMESTAMP': timestamp.toString(),
+          'Accept': 'application/json',
         },
+        cache: 'no-store'
       })
 
-      if (!balanceResponse.ok) {
-        throw new Error('Failed to fetch portfolio data')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch portfolio data')
       }
 
-      const balanceData = await balanceResponse.json()
-
-      // Fetch market prices
-      const priceResponse = await fetch('https://api.coindcx.com/exchange/v1/markets_details')
-      const marketData = await priceResponse.json()
+      if (!data.balanceData || !data.marketData) {
+        throw new Error('Invalid data received from server')
+      }
 
       // Process and combine the data
-      const assets: CryptoAsset[] = balanceData
+      const assets: CryptoAsset[] = data.balanceData
         .filter((balance: any) => parseFloat(balance.balance) > 0)
         .map((balance: any) => {
-          const market = marketData.find((m: any) => m.symbol === balance.currency)
+          const market = data.marketData.find((m: any) => m.symbol === balance.currency)
           const price = market?.last_price || 0
           const amount = parseFloat(balance.balance)
           const value = amount * price
@@ -91,7 +74,7 @@ export default function PortfolioPage() {
       setError(null)
     } catch (err) {
       console.error('Error fetching portfolio:', err)
-      setError('Failed to load portfolio data')
+      setError(err instanceof Error ? err.message : 'Failed to load portfolio data')
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +116,7 @@ export default function PortfolioPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Crypto Portfolio</h1>
               <p className="text-muted-foreground">
-                Last updated: {lastUpdated.toLocaleTimeString()}
+                Last updated: {lastUpdated.toLocaleTimeString('en-US', { hour12: false })}
               </p>
             </div>
             <Button onClick={fetchPortfolio} disabled={isLoading} size="sm">
