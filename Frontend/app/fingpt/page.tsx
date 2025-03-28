@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, Bot, User, Loader2, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,14 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 export default function FinGPTPage() {
+  const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,56 +25,65 @@ export default function FinGPTPage() {
     setMessage("");
     setIsLoading(true);
 
-    // Add user message to chat history
-    setChatHistory((prev) => [...prev, { role: "user", content: userMessage }]);
+    setChatHistory((prev) => {
+      const newHistory = [...prev];
+      if (newHistory.length >= 100) {
+        newHistory.shift();
+      }
+      return [...newHistory, { role: "user", content: userMessage }];
+    });
 
     try {
-      // Call Ollama API
-      const response = await fetch('http://localhost:11434/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/fingpt", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: 'qwen2.5-coder:7b',
-          messages: [
-            {
-              role: "system",
-              content: "You are FinGPT, a helpful AI assistant focused on financial topics. Provide clear, accurate financial advice and analysis."
-            },
-            ...chatHistory.map(msg => ({
-              role: msg.role,
-              content: msg.content
-            })),
-            {
-              role: "user",
-              content: userMessage
-            }
-          ],
-          stream: false
+          message: userMessage,
+          history: chatHistory
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from Ollama');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      const assistantResponse = data.message?.content || "I apologize, but I couldn't process your request.";
-      setChatHistory((prev) => [...prev, { role: "assistant", content: assistantResponse }]);
-    } catch (error) {
-      console.error('Ollama API Error:', error);
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "I apologize, but I encountered an error. Please make sure Ollama is running locally with the qwen2.5-coder:7b model installed."
+      
+      if (!data.success) {
+        throw new Error(data.error || "Failed to get response");
+      }
+
+      const assistantResponse = data.response || "I couldn't process your request.";
+      
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        if (newHistory.length >= 100) {
+          newHistory.shift();
         }
-      ]);
+        return [...newHistory, { role: "assistant", content: assistantResponse }];
+      });
+    } catch (error) {
+      console.error("API Error:", error);
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        if (newHistory.length >= 100) {
+          newHistory.shift();
+        }
+        return [...newHistory, {
+          role: "assistant",
+          content: "I encountered an error. Please try again later."
+        }];
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -103,7 +117,7 @@ export default function FinGPTPage() {
                 <h2 className="text-2xl font-bold mb-2">Welcome to FinGPT</h2>
                 <p className="mb-1">Your AI-powered financial assistant</p>
                 <p className="text-sm">Ask me about financial markets, investment strategies, or economic trends!</p>
-                <p className="text-xs mt-4 text-gray-400">Using Ollama with qwen2.5-coder:7b model</p>
+                <p className="text-xs mt-4 text-gray-400">Using OpenRouter with DeepSeek model</p>
               </motion.div>
             ) : (
               chatHistory.map((msg, index) => (
