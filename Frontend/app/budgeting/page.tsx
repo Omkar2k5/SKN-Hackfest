@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { AlertCircle, ArrowRight, Brain, DollarSign, HelpCircle, Plus, Settings } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,14 @@ interface Budget {
   spent: number
   createdAt: number
   isActive: boolean
+  merchants: string[]
+  budgetReached: boolean
+}
+
+interface Transaction {
+  merchantName: string
+  amount: number
+  timestamp: number
 }
 
 export default function BudgetingPage() {
@@ -28,14 +37,28 @@ export default function BudgetingPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const budgetsRef = ref(database, 'budgets')
+    // Create separate refs for budgets and transactions
+    const budgetsRef = ref(database, 'budgets')
+    const transactionsRef = ref(database, 'transactions')
+    
+    // Track processed transactions to avoid double counting
+    let processedTransactions = new Set()
 
-      onValue(budgetsRef, (snapshot: DataSnapshot) => {
+    try {
+      // Listen for budgets
+      const unsubscribeBudgets = onValue(budgetsRef, (snapshot: DataSnapshot) => {
         try {
           const data = snapshot.val() as Record<string, Budget> | null
           if (data) {
-            setBudgets(data)
+            // Initialize budgetReached based on current spent amounts
+            const updatedBudgets = Object.entries(data).reduce((acc, [id, budget]) => ({
+              ...acc,
+              [id]: {
+                ...budget,
+                budgetReached: (budget.spent >= budget.amount)
+              }
+            }), {})
+            setBudgets(updatedBudgets)
           } else {
             setBudgets({})
           }
@@ -44,8 +67,62 @@ export default function BudgetingPage() {
           setError('Error loading budgets')
         }
       })
+
+      // Listen for transactions
+      const unsubscribeTransactions = onValue(transactionsRef, (snapshot: DataSnapshot) => {
+        try {
+          const transactionsData = snapshot.val()
+          if (transactionsData) {
+            // Update budgets based on new transactions
+            setBudgets(currentBudgets => {
+              const updatedBudgets = { ...currentBudgets }
+              
+              Object.entries(transactionsData).forEach(([transactionId, transaction]: [string, any]) => {
+                // Skip if we've already processed this transaction
+                if (processedTransactions.has(transactionId)) return
+                
+                // Mark transaction as processed
+                processedTransactions.add(transactionId)
+
+                // Find matching budget and update spent amount
+                Object.entries(updatedBudgets).forEach(([budgetId, budget]) => {
+                  if (budget.merchants?.includes(transaction.merchantName)) {
+                    const newSpentAmount = (budget.spent || 0) + Number(transaction.amount)
+                    updatedBudgets[budgetId] = {
+                      ...budget,
+                      spent: newSpentAmount,
+                      budgetReached: newSpentAmount >= budget.amount
+                    }
+
+                    // If budget is newly exceeded, show a toast notification
+                    if (newSpentAmount >= budget.amount && !budget.budgetReached) {
+                      toast({
+                        title: "Budget Limit Exceeded",
+                        description: `Your ${budget.category} budget has exceeded its limit of ₹${budget.amount.toLocaleString('en-IN')}`,
+                        variant: "destructive"
+                      })
+                    }
+                  }
+                })
+              })
+
+              return updatedBudgets
+            })
+          }
+        } catch (err) {
+          console.error('Error processing transactions:', err)
+          setError('Error updating transaction amounts')
+        }
+      })
+
+      // Cleanup function
+      return () => {
+        unsubscribeBudgets()
+        unsubscribeTransactions()
+        processedTransactions.clear()
+      }
     } catch (err) {
-      console.error('Error setting up Firebase listener:', err)
+      console.error('Error setting up Firebase listeners:', err)
       setError('Error connecting to database')
     }
   }, [])
@@ -54,9 +131,10 @@ export default function BudgetingPage() {
     .filter(([_, budget]) => budget.isActive)
     .sort((a, b) => b[1].createdAt - a[1].createdAt)
 
-  const getBudgetColor = (percentage: number) => {
-    if (percentage >= 90) return 'border-l-rose-500'
-    if (percentage >= 70) return 'border-l-amber-500'
+  const getBudgetColor = (budget: Budget) => {
+    if (budget.budgetReached) return 'border-l-rose-500'
+    const percentage = (budget.spent / budget.amount) * 100
+    if (percentage >= 90) return 'border-l-amber-500'
     return 'border-l-green-500'
   }
 
@@ -133,7 +211,7 @@ export default function BudgetingPage() {
                   activeBudgets.map(([id, budget]) => {
                     const percentage = (budget.spent / budget.amount) * 100;
                     return (
-                      <Card key={id} className={`border-l-4 ${getBudgetColor(percentage)}`}>
+                      <Card key={id} className={`border-l-4 ${getBudgetColor(budget)}`}>
                         <CardHeader>
                           <CardTitle className="flex items-center justify-between">
                             <span>{budget.category}</span>
@@ -141,10 +219,18 @@ export default function BudgetingPage() {
                               ₹{budget.spent.toLocaleString('en-IN')}/₹{budget.amount.toLocaleString('en-IN')}
                             </span>
                           </CardTitle>
-                          <CardDescription>{budget.description}</CardDescription>
+                          <CardDescription>
+                            {budget.description}
+                            {budget.budgetReached && (
+                              <p className="mt-1 text-rose-500 font-medium">Budget limit exceeded!</p>
+                            )}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <Progress value={percentage} className="h-2" />
+                          <Progress 
+                            value={percentage} 
+                            className={`h-2 ${budget.budgetReached ? 'bg-rose-100' : ''}`} 
+                          />
                           <p className="mt-2 text-xs text-muted-foreground">
                             {percentage.toFixed(1)}% of budget used
                           </p>

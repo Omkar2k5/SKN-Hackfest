@@ -5,31 +5,33 @@ import { ref, push } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 
 export function BudgetForm() {
   const { toast } = useToast()
+  const [category, setCategory] = useState("")
+  const [amount, setAmount] = useState("")
+  const [description, setDescription] = useState("")
+  const [merchants, setMerchants] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    category: "",
-    amount: "",
-    description: ""
-  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      const budgetRef = ref(database, 'budgets')
-      await push(budgetRef, {
-        category: formData.category,
-        amount: parseFloat(formData.amount),
-        description: formData.description,
+      const budgetsRef = ref(database, 'budgets')
+      await push(budgetsRef, {
+        category,
+        amount: Number(amount),
+        description,
+        merchants: merchants.split(',').map(m => m.trim()),
         spent: 0,
         createdAt: Date.now(),
-        isActive: true
+        isActive: true,
+        budgetReached: false
       })
 
       toast({
@@ -38,13 +40,12 @@ export function BudgetForm() {
       })
 
       // Reset form
-      setFormData({
-        category: "",
-        amount: "",
-        description: ""
-      })
+      setCategory("")
+      setAmount("")
+      setDescription("")
+      setMerchants("")
     } catch (error) {
-      console.error('Error creating budget:', error)
+      console.error("Error creating budget:", error)
       toast({
         title: "Error",
         description: "Failed to create budget. Please try again.",
@@ -55,56 +56,51 @@ export function BudgetForm() {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="category">Category Name</Label>
+        <Label htmlFor="category">Category</Label>
         <Input
           id="category"
-          name="category"
-          placeholder="e.g., Dining, Shopping, Entertainment"
-          value={formData.category}
-          onChange={handleChange}
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
           required
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="amount">Monthly Budget Amount (₹)</Label>
+        <Label htmlFor="amount">Amount (₹)</Label>
         <Input
           id="amount"
-          name="amount"
           type="number"
-          placeholder="Enter amount"
-          value={formData.amount}
-          onChange={handleChange}
-          min="0"
-          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
           required
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Input
+        <Textarea
           id="description"
-          name="description"
-          placeholder="Brief description of this budget category"
-          value={formData.description}
-          onChange={handleChange}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           required
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <div className="space-y-2">
+        <Label htmlFor="merchants">Merchants (comma-separated)</Label>
+        <Input
+          id="merchants"
+          value={merchants}
+          onChange={(e) => setMerchants(e.target.value)}
+          placeholder="e.g. Amazon, Flipkart, Local Store"
+          required
+        />
+      </div>
+
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Creating..." : "Create Budget"}
       </Button>
     </form>

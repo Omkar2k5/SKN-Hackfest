@@ -4,19 +4,18 @@ import { initializeApp } from 'firebase/app'
 import { getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDYpDxwgVxG-uXVdXuzvlJJg4AXQfUFAyE",
-  authDomain: "smart-fiance-tracker.firebaseapp.com",
-  databaseURL: "https://smart-fiance-tracker-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "smart-fiance-tracker",
-  storageBucket: "smart-fiance-tracker.appspot.com",
-  messagingSenderId: "1098977655324",
-  appId: "1:1098977655324:web:b5e4c9e1d3f2c5f2f3f2c5"
+  apiKey: "AIzaSyDPYCFbVGakt0uBmE3OZRh00wUDDXgvgXY",
+  authDomain: "skn-hackfest.firebaseapp.com",
+  databaseURL: "https://skn-hackfest-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "skn-hackfest",
+  storageBucket: "skn-hackfest.firebasestorage.app",
+  messagingSenderId: "687898768842",
+  appId: "1:687898768842:web:812be8fba162b2bfc9cb33",
+  measurementId: "G-1JY3TX0JVP"
 }
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
-// Get Realtime Database instance
-const database = getDatabase(app)
-
-export { database } 
+// Initialize Realtime Database and get a reference to the service
+export const database = getDatabase(app) 
