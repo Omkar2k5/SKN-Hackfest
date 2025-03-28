@@ -167,7 +167,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen flex-col">
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/home" className="flex items-center gap-2">
             <IndianRupee className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">FinanceBuddy</span>
           </Link>

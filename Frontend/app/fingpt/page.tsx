@@ -82,7 +82,7 @@ export default function FinGPTPage() {
       {/* Navigation Header */}
       <header className="fixed top-0 left-0 right-0 bg-white border-b z-10">
         <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/">
+          <Link href="/home">
             <Button variant="ghost" className="gap-2">
               <Home className="w-5 h-5" />
               Home

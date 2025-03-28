@@ -337,7 +337,7 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div ref={incomePieRef}>
-                  <IncomePieChart dateRange={dateRange} />
+                  <IncomePieChart />
                 </div>
               </CardContent>
             </Card>
@@ -349,7 +349,7 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div ref={expensePieRef}>
-                  <ExpensePieChart dateRange={dateRange} />
+                  <ExpensePieChart />
                 </div>
               </CardContent>
             </Card>

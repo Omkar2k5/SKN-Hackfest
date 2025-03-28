@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { isWithinInterval } from "date-fns"
 
 interface Transaction {
   accountNumber: string
@@ -20,6 +21,13 @@ interface MerchantData {
   color: string
 }
 
+interface ExpensePieChartProps {
+  dateRange?: {
+    from: Date
+    to: Date
+  }
+}
+
 // Predefined colors for merchants
 const COLORS = [
   "#ef4444", // Red
@@ -34,7 +42,7 @@ const COLORS = [
   "#84cc16"  // Lime
 ]
 
-export function ExpensePieChart() {
+export function ExpensePieChart({ dateRange }: ExpensePieChartProps) {
   const [debitTransactions, setDebitTransactions] = useState<Transaction[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -47,7 +55,19 @@ export function ExpensePieChart() {
           const debitData = snapshot.val() as Record<string, Transaction> | null
           
           if (debitData) {
-            const transactions = Object.values(debitData)
+            let transactions = Object.values(debitData)
+            
+            // Filter by date range if provided
+            if (dateRange) {
+              transactions = transactions.filter(transaction => {
+                const transactionDate = new Date(transaction.timestamp)
+                return isWithinInterval(transactionDate, {
+                  start: dateRange.from,
+                  end: dateRange.to
+                })
+              })
+            }
+            
             setDebitTransactions(transactions)
           } else {
             setDebitTransactions([])
@@ -61,7 +81,7 @@ export function ExpensePieChart() {
       console.error('Error setting up Firebase listener:', err)
       setError('Error connecting to database')
     }
-  }, [])
+  }, [dateRange])
 
   if (error) {
     return (

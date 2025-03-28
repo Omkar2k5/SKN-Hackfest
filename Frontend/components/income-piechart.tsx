@@ -36,7 +36,7 @@ const COLORS = [
 ]
 
 interface IncomePieChartProps {
-  dateRange: {
+  dateRange?: {
     from: Date
     to: Date
   }
@@ -55,14 +55,19 @@ export function IncomePieChart({ dateRange }: IncomePieChartProps) {
           const creditData = snapshot.val() as Record<string, Transaction> | null
           
           if (creditData) {
-            const transactions = Object.values(creditData)
-              .filter(transaction => {
+            let transactions = Object.values(creditData)
+            
+            // Filter by date range if provided
+            if (dateRange) {
+              transactions = transactions.filter(transaction => {
                 const transactionDate = new Date(transaction.timestamp)
                 return isWithinInterval(transactionDate, {
                   start: dateRange.from,
                   end: dateRange.to
                 })
               })
+            }
+            
             setCreditTransactions(transactions)
           } else {
             setCreditTransactions([])
