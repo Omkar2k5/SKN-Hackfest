@@ -15,6 +15,7 @@ export function BudgetForm() {
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
   const [merchants, setMerchants] = useState("")
+  const [upiIds, setUpiIds] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,6 +29,7 @@ export function BudgetForm() {
         amount: Number(amount),
         description,
         merchants: merchants.split(',').map(m => m.trim()),
+        upiIds: upiIds.split(',').map(upi => upi.trim()),
         spent: 0,
         createdAt: Date.now(),
         isActive: true,
@@ -44,6 +46,7 @@ export function BudgetForm() {
       setAmount("")
       setDescription("")
       setMerchants("")
+      setUpiIds("")
     } catch (error) {
       console.error("Error creating budget:", error)
       toast({
@@ -90,12 +93,23 @@ export function BudgetForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="merchants">Merchants (comma-separated)</Label>
+        <Label htmlFor="merchants">Phone Numbers (comma-separated)</Label>
         <Input
           id="merchants"
           value={merchants}
           onChange={(e) => setMerchants(e.target.value)}
-          placeholder="e.g. Amazon, Flipkart, Local Store"
+          placeholder="e.g. 9371110123"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="upiIds">UPI IDs (comma-separated)</Label>
+        <Input
+          id="upiIds"
+          value={upiIds}
+          onChange={(e) => setUpiIds(e.target.value)}
+          placeholder="e.g. 9371110123@superyes"
           required
         />
       </div>

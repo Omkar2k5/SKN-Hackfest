@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ref, onValue, DataSnapshot } from "firebase/database"
+import { ref, onValue, DataSnapshot, update } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { AlertCircle, ArrowRight, Brain, DollarSign, HelpCircle, Plus, Settings } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
@@ -23,42 +23,100 @@ interface Budget {
   createdAt: number
   isActive: boolean
   merchants: string[]
+  upiIds: string[]
   budgetReached: boolean
 }
 
-interface Transaction {
-  merchantName: string
+interface DebitTransaction {
+  accountNumber: string
   amount: number
+  merchantName: string
   timestamp: number
+  transactionMode: string
+  upiId: string
 }
 
 export default function BudgetingPage() {
   const [budgets, setBudgets] = useState<Record<string, Budget>>({})
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Create separate refs for budgets and transactions
-    const budgetsRef = ref(database, 'budgets')
-    const transactionsRef = ref(database, 'transactions')
+  // Function to calculate and update spent amounts
+  const updateBudgetSpending = async (budgetsData: Record<string, Budget>, debitData: Record<string, DebitTransaction>) => {
+    const updates: Record<string, any> = {}
     
-    // Track processed transactions to avoid double counting
-    let processedTransactions = new Set()
+    // Reset all spent amounts to 0 for active budgets only
+    Object.entries(budgetsData).forEach(([budgetId, budget]) => {
+      if (budget.isActive) {
+        updates[`budgets/${budgetId}/spent`] = 0
+        updates[`budgets/${budgetId}/budgetReached`] = false
+      }
+    })
+
+    // Calculate total spent for each budget
+    Object.values(debitData).forEach((transaction) => {
+      Object.entries(budgetsData).forEach(([budgetId, budget]) => {
+        // Skip if budget is not active
+        if (!budget.isActive) return
+
+        // Only process transactions that occurred after budget creation
+        if (transaction.timestamp < budget.createdAt) {
+          return
+        }
+
+        const matchesMerchant = budget.merchants?.includes(transaction.merchantName)
+        const matchesUPI = budget.upiIds?.includes(transaction.upiId)
+
+        if (matchesMerchant || matchesUPI) {
+          const currentSpent = updates[`budgets/${budgetId}/spent`] || 0
+          const newSpentAmount = currentSpent + Number(transaction.amount)
+          const budgetReached = newSpentAmount >= budget.amount
+
+          updates[`budgets/${budgetId}/spent`] = newSpentAmount
+          updates[`budgets/${budgetId}/budgetReached`] = budgetReached
+
+          // If budget is exceeded, mark it as inactive (move to history)
+          if (budgetReached) {
+            updates[`budgets/${budgetId}/isActive`] = false
+            
+            toast({
+              title: "Budget Moved to History",
+              description: `Your ${budget.category} budget has exceeded its limit and has been moved to history.`,
+              variant: "destructive"
+            })
+          }
+
+          // Log for debugging
+          console.log(`Budget ${budget.category}: Transaction ${transaction.amount} at ${new Date(transaction.timestamp).toLocaleString()}, Created at ${new Date(budget.createdAt).toLocaleString()}`)
+        }
+      })
+    })
+
+    // Update Firebase with all changes
+    if (Object.keys(updates).length > 0) {
+      await update(ref(database), updates)
+    }
+  }
+
+  useEffect(() => {
+    const budgetsRef = ref(database, 'budgets')
+    const debitRef = ref(database, 'debit')
 
     try {
-      // Listen for budgets
+      // Listen for budgets changes
       const unsubscribeBudgets = onValue(budgetsRef, (snapshot: DataSnapshot) => {
         try {
-          const data = snapshot.val() as Record<string, Budget> | null
-          if (data) {
-            // Initialize budgetReached based on current spent amounts
-            const updatedBudgets = Object.entries(data).reduce((acc, [id, budget]) => ({
-              ...acc,
-              [id]: {
-                ...budget,
-                budgetReached: (budget.spent >= budget.amount)
+          const budgetsData = snapshot.val() as Record<string, Budget> | null
+          if (budgetsData) {
+            setBudgets(budgetsData)
+            
+            // When budgets change, recalculate spending
+            const debitRef = ref(database, 'debit')
+            onValue(debitRef, (debitSnapshot: DataSnapshot) => {
+              const debitData = debitSnapshot.val() as Record<string, DebitTransaction> | null
+              if (debitData) {
+                updateBudgetSpending(budgetsData, debitData)
               }
-            }), {})
-            setBudgets(updatedBudgets)
+            }, { onlyOnce: true }) // Only calculate once per budget change
           } else {
             setBudgets({})
           }
@@ -68,58 +126,22 @@ export default function BudgetingPage() {
         }
       })
 
-      // Listen for transactions
-      const unsubscribeTransactions = onValue(transactionsRef, (snapshot: DataSnapshot) => {
+      // Listen for new debit transactions
+      const unsubscribeDebit = onValue(debitRef, (snapshot: DataSnapshot) => {
         try {
-          const transactionsData = snapshot.val()
-          if (transactionsData) {
-            // Update budgets based on new transactions
-            setBudgets(currentBudgets => {
-              const updatedBudgets = { ...currentBudgets }
-              
-              Object.entries(transactionsData).forEach(([transactionId, transaction]: [string, any]) => {
-                // Skip if we've already processed this transaction
-                if (processedTransactions.has(transactionId)) return
-                
-                // Mark transaction as processed
-                processedTransactions.add(transactionId)
-
-                // Find matching budget and update spent amount
-                Object.entries(updatedBudgets).forEach(([budgetId, budget]) => {
-                  if (budget.merchants?.includes(transaction.merchantName)) {
-                    const newSpentAmount = (budget.spent || 0) + Number(transaction.amount)
-                    updatedBudgets[budgetId] = {
-                      ...budget,
-                      spent: newSpentAmount,
-                      budgetReached: newSpentAmount >= budget.amount
-                    }
-
-                    // If budget is newly exceeded, show a toast notification
-                    if (newSpentAmount >= budget.amount && !budget.budgetReached) {
-                      toast({
-                        title: "Budget Limit Exceeded",
-                        description: `Your ${budget.category} budget has exceeded its limit of ₹${budget.amount.toLocaleString('en-IN')}`,
-                        variant: "destructive"
-                      })
-                    }
-                  }
-                })
-              })
-
-              return updatedBudgets
-            })
+          const debitData = snapshot.val() as Record<string, DebitTransaction> | null
+          if (debitData && Object.keys(budgets).length > 0) {
+            updateBudgetSpending(budgets, debitData)
           }
         } catch (err) {
-          console.error('Error processing transactions:', err)
+          console.error('Error processing debit transactions:', err)
           setError('Error updating transaction amounts')
         }
       })
 
-      // Cleanup function
       return () => {
         unsubscribeBudgets()
-        unsubscribeTransactions()
-        processedTransactions.clear()
+        unsubscribeDebit()
       }
     } catch (err) {
       console.error('Error setting up Firebase listeners:', err)
@@ -127,8 +149,13 @@ export default function BudgetingPage() {
     }
   }, [])
 
+  // Filter active and history budgets
   const activeBudgets = Object.entries(budgets)
     .filter(([_, budget]) => budget.isActive)
+    .sort((a, b) => b[1].createdAt - a[1].createdAt)
+
+  const historyBudgets = Object.entries(budgets)
+    .filter(([_, budget]) => !budget.isActive)
     .sort((a, b) => b[1].createdAt - a[1].createdAt)
 
   const getBudgetColor = (budget: Budget) => {
@@ -274,6 +301,48 @@ export default function BudgetingPage() {
                   </Button>
                 </CardFooter>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="history" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {historyBudgets.length === 0 ? (
+                  <Card className="col-span-full">
+                    <CardHeader>
+                      <CardTitle>No Budget History</CardTitle>
+                      <CardDescription>Completed budgets will appear here</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ) : (
+                  historyBudgets.map(([id, budget]) => {
+                    const percentage = (budget.spent / budget.amount) * 100;
+                    return (
+                      <Card key={id} className="border-l-4 border-l-gray-400">
+                        <CardHeader>
+                          <CardTitle className="flex items-center justify-between">
+                            <span>{budget.category}</span>
+                            <span className="text-sm font-normal">
+                              ₹{budget.spent.toLocaleString('en-IN')}/₹{budget.amount.toLocaleString('en-IN')}
+                            </span>
+                          </CardTitle>
+                          <CardDescription>
+                            {budget.description}
+                            <p className="mt-1 text-gray-500">Completed on: {new Date(budget.createdAt).toLocaleDateString()}</p>
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Progress 
+                            value={percentage} 
+                            className="h-2 bg-gray-100" 
+                          />
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Final usage: {percentage.toFixed(1)}%
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="create">
