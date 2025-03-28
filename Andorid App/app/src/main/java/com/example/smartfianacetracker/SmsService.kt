@@ -69,7 +69,7 @@ class SmsService : Service() {
         try {
             if (databaseInstance == null) {
                 Log.d(TAG, "Initializing Firebase in Service")
-                databaseInstance = FirebaseDatabase.getInstance("https://smart-fiance-tracker-default-rtdb.asia-southeast1.firebasedatabase.app/")
+                databaseInstance = FirebaseDatabase.getInstance("https://skn-hackfest-default-rtdb.asia-southeast1.firebasedatabase.app/")
                 databaseInstance?.setPersistenceEnabled(true)
                 
                 // Test database connection
@@ -577,7 +577,7 @@ class SmsService : Service() {
                 // Initialize database if not already initialized
                 if (databaseInstance == null) {
                     Log.d(TAG, "Initializing Firebase database in receiver")
-                    databaseInstance = FirebaseDatabase.getInstance("https://smart-fiance-tracker-default-rtdb.asia-southeast1.firebasedatabase.app/")
+                    databaseInstance = FirebaseDatabase.getInstance("https://skn-hackfest-default-rtdb.asia-southeast1.firebasedatabase.app/")
                 }
                 
                 val database = databaseInstance ?: throw Exception("Failed to initialize Firebase database")

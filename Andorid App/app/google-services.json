@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "599424177128",
-    "project_id": "smart-fiance-tracker",
-    "storage_bucket": "smart-fiance-tracker.firebasestorage.app"
+    "project_number": "687898768842",
+    "project_id": "skn-hackfest",
+    "storage_bucket": "skn-hackfest.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:599424177128:android:62c66c705d081fb08eca5d",
+        "mobilesdk_app_id": "1:687898768842:android:13bd453be5d7ad73c9cb33",
         "android_client_info": {
           "package_name": "com.example.smartfianacetracker"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDklA5y8uGPIdIftAyoXNIhswBZfGdLO_s"
+          "current_key": "AIzaSyCTn42mYS7wCWJdPn5Qpn2viJR0X9hz51c"
         }
       ],
       "services": {

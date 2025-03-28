@@ -13,10 +13,12 @@ import androidx.core.content.ContextCompat
 import com.example.smartfianacetracker.databinding.ActivityMainBinding
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.FirebaseApp
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var isServiceRunning = false
+    private lateinit var serviceToggle: SwitchMaterial
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -41,6 +43,15 @@ class MainActivity : AppCompatActivity() {
 
             updateStatusText("App initialized successfully")
             Log.d(TAG, "MainActivity onCreate completed")
+
+            serviceToggle = findViewById(R.id.serviceToggle)
+            serviceToggle.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    startBackgroundService()
+                } else {
+                    stopBackgroundService()
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate", e)
             handleError("Error initializing app", e)
@@ -59,7 +70,7 @@ class MainActivity : AppCompatActivity() {
     private fun initializeFirebaseStructure() {
         try {
             Log.d(TAG, "Initializing Firebase structure")
-            val database = FirebaseDatabase.getInstance("https://smart-fiance-tracker-default-rtdb.asia-southeast1.firebasedatabase.app/")
+            val database = FirebaseDatabase.getInstance("https://skn-hackfest-default-rtdb.asia-southeast1.firebasedatabase.app/")
             database.setPersistenceEnabled(true)
             
             val ref = database.getReference("transactions")
@@ -188,6 +199,16 @@ class MainActivity : AppCompatActivity() {
         Log.e(TAG, errorMessage, error)
         updateStatusText("Error: $message")
         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+    }
+
+    private fun startBackgroundService() {
+        val serviceIntent = Intent(this, BackgroundService::class.java)
+        startService(serviceIntent)
+    }
+    
+    private fun stopBackgroundService() {
+        val serviceIntent = Intent(this, BackgroundService::class.java)
+        stopService(serviceIntent)
     }
 
     companion object {

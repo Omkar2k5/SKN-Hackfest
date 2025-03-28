@@ -52,6 +52,11 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name=".BackgroundService"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>
