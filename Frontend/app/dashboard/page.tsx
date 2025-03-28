@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
+import { subMonths } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -243,7 +244,7 @@ export default function DashboardPage() {
               <Card className="lg:col-span-3">
                 <CardHeader>
                   <CardTitle>Expense Breakdown</CardTitle>
-                  <CardDescription>Your spending by category</CardDescription>
+                  <CardDescription>Top merchants by spending amount</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ExpensePieChart />

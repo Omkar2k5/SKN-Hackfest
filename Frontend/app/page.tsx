@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
             <Image 
-              src="/images/finance-logo.png" 
+              src="/images/homelogo.png" 
               alt="FinanceBuddy Logo" 
               width={32} 
               height={32} 
@@ -68,13 +68,13 @@ export default function HomePage() {
             <div className="mx-auto lg:mx-0 relative">
               <div className="relative rounded-lg border bg-background p-2 shadow-lg">
                 <div className="rounded-md bg-white shadow-sm">
-                  <img
-                    src="images/
-                    homelogo.png?height=500&width=700"
+                  <Image
+                    src="/images/homelogo.png"
                     alt="Dashboard Preview"
-                    className="rounded-md"
                     width={700}
                     height={500}
+                    className="rounded-md object-cover"
+                    priority
                   />
                 </div>
               </div>
@@ -158,11 +158,12 @@ export default function HomePage() {
             <div className="flex flex-col items-center md:items-start text-center md:text-left">
               <div className="w-fit mb-6">
                 <Image 
-                  src="/images/Sveri.jpeg" 
-                  alt="Chakravyuh Logo" 
+                  src="/images/Sveri.jpg" 
+                  alt="SVERI Logo" 
                   width={180} 
                   height={180} 
                   className="object-contain rounded-full border-4 border-[#00e6e6] shadow-lg"
+                  priority
                 />
               </div>
               <h3 className="text-xl font-bold mb-2 text-[#9eff3d]">Chakravyuh 1.0 – 24-Hour Hackathon</h3>

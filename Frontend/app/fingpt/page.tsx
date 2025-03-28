@@ -25,13 +25,11 @@ export default function FinGPTPage() {
     setMessage("");
     setIsLoading(true);
 
-    setChatHistory((prev) => {
-      const newHistory = [...prev];
-      if (newHistory.length >= 100) {
-        newHistory.shift();
-      }
-      return [...newHistory, { role: "user", content: userMessage }];
-    });
+    // Add user message to chat immediately
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", content: userMessage }
+    ]);
 
     try {
       const response = await fetch("/api/fingpt", {
@@ -41,41 +39,35 @@ export default function FinGPTPage() {
         },
         body: JSON.stringify({
           message: userMessage,
-          history: chatHistory
+          history: chatHistory.slice(-10) // Only send last 10 messages for context
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
       
       if (!data.success) {
-        throw new Error(data.error || "Failed to get response");
+        throw new Error(data.error || 'Failed to get response from FinGPT');
       }
 
-      const assistantResponse = data.response || "I couldn't process your request.";
+      const assistantResponse = data.response;
       
-      setChatHistory((prev) => {
-        const newHistory = [...prev];
-        if (newHistory.length >= 100) {
-          newHistory.shift();
-        }
-        return [...newHistory, { role: "assistant", content: assistantResponse }];
-      });
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: assistantResponse }
+      ]);
     } catch (error) {
-      console.error("API Error:", error);
-      setChatHistory((prev) => {
-        const newHistory = [...prev];
-        if (newHistory.length >= 100) {
-          newHistory.shift();
-        }
-        return [...newHistory, {
+      console.error("FinGPT Error:", error);
+      setChatHistory((prev) => [
+        ...prev,
+        {
           role: "assistant",
-          content: "I encountered an error. Please try again later."
-        }];
-      });
+          content: `I apologize, but I encountered an error: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }

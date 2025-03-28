@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { isWithinInterval } from "date-fns"
 
 interface Transaction {
   accountNumber: string
@@ -22,46 +23,60 @@ interface MerchantData {
 
 // Predefined colors for merchants
 const COLORS = [
-  "#ef4444", // Red
-  "#3b82f6", // Blue
-  "#10b981", // Green
-  "#f59e0b", // Orange
-  "#8b5cf6", // Purple
-  "#ec4899", // Pink
-  "#06b6d4", // Cyan
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#84cc16"  // Lime
+  "#10B981", // Green
+  "#3B82F6", // Blue
+  "#F59E0B", // Orange
+  "#EC4899", // Pink
+  "#8B5CF6", // Purple
+  "#06B6D4", // Cyan
+  "#14B8A6", // Teal
+  "#84CC16", // Lime
+  "#F97316", // Orange
+  "#6366F1"  // Indigo
 ]
 
-export function ExpensePieChart() {
-  const [debitTransactions, setDebitTransactions] = useState<Transaction[]>([])
+interface IncomePieChartProps {
+  dateRange: {
+    from: Date
+    to: Date
+  }
+}
+
+export function IncomePieChart({ dateRange }: IncomePieChartProps) {
+  const [creditTransactions, setCreditTransactions] = useState<Transaction[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     try {
-      const debitRef = ref(database, 'debit')
+      const creditRef = ref(database, 'credit')
 
-      onValue(debitRef, (snapshot: DataSnapshot) => {
+      onValue(creditRef, (snapshot: DataSnapshot) => {
         try {
-          const debitData = snapshot.val() as Record<string, Transaction> | null
+          const creditData = snapshot.val() as Record<string, Transaction> | null
           
-          if (debitData) {
-            const transactions = Object.values(debitData)
-            setDebitTransactions(transactions)
+          if (creditData) {
+            const transactions = Object.values(creditData)
+              .filter(transaction => {
+                const transactionDate = new Date(transaction.timestamp)
+                return isWithinInterval(transactionDate, {
+                  start: dateRange.from,
+                  end: dateRange.to
+                })
+              })
+            setCreditTransactions(transactions)
           } else {
-            setDebitTransactions([])
+            setCreditTransactions([])
           }
         } catch (err) {
-          console.error('Error processing debit data:', err)
-          setError('Error loading expense data')
+          console.error('Error processing credit data:', err)
+          setError('Error loading income data')
         }
       })
     } catch (err) {
       console.error('Error setting up Firebase listener:', err)
       setError('Error connecting to database')
     }
-  }, [])
+  }, [dateRange])
 
   if (error) {
     return (
@@ -71,16 +86,16 @@ export function ExpensePieChart() {
     )
   }
 
-  if (debitTransactions.length === 0) {
+  if (creditTransactions.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-4">
-        No expense data available
+        No income data available for the selected period
       </div>
     )
   }
 
   // Group transactions by merchant and calculate totals
-  const merchantTotals = debitTransactions.reduce((acc, transaction) => {
+  const merchantTotals = creditTransactions.reduce((acc, transaction) => {
     const merchantName = transaction.merchantName
     if (!acc[merchantName]) {
       acc[merchantName] = {
@@ -96,9 +111,9 @@ export function ExpensePieChart() {
   // Convert to array and sort by value
   const data = Object.values(merchantTotals)
     .sort((a, b) => b.value - a.value)
-    .slice(0, 10) // Show top 10 merchants
+    .slice(0, 10) // Show top 10 income sources
 
-  const totalAmount = data.reduce((sum, item) => sum + item.value, 0)
+  const totalIncome = data.reduce((sum, item) => sum + item.value, 0)
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -108,7 +123,7 @@ export function ExpensePieChart() {
           <p className="font-medium">{data.name}</p>
           <p className="text-sm">₹{data.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
           <p className="text-xs text-muted-foreground">
-            {((data.value / totalAmount) * 100).toFixed(1)}% of total
+            {((data.value / totalIncome) * 100).toFixed(1)}% of total income
           </p>
         </div>
       )
@@ -139,5 +154,4 @@ export function ExpensePieChart() {
       </ResponsiveContainer>
     </div>
   )
-}
-
+} 
