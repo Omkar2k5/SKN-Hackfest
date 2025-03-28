@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { IndianRupee, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCcw } from "lucide-react"
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +24,21 @@ export default function PortfolioPage() {
   const [totalValue, setTotalValue] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [lastUpdated, setLastUpdated] = useState<string>('')
+
+  useEffect(() => {
+    const updateTimeString = () => {
+      setLastUpdated(new Date().toLocaleTimeString('en-US', { 
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }))
+    }
+    updateTimeString()
+    const interval = setInterval(updateTimeString, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const fetchPortfolio = async () => {
     try {
@@ -51,8 +66,14 @@ export default function PortfolioPage() {
       const assets: CryptoAsset[] = data.balanceData
         .filter((balance: any) => parseFloat(balance.balance) > 0)
         .map((balance: any) => {
-          const market = data.marketData.find((m: any) => m.symbol === balance.currency)
-          const price = market?.last_price || 0
+          // Find market data for this asset
+          const market = data.marketData.find((m: any) => 
+            m.symbol === `${balance.currency}USDT` || 
+            m.symbol === `${balance.currency}BUSD`
+          )
+
+          // Use USDT price directly (assuming prices are in USDT)
+          const price = market ? parseFloat(market.last_price) : 0
           const amount = parseFloat(balance.balance)
           const value = amount * price
 
@@ -70,7 +91,6 @@ export default function PortfolioPage() {
 
       setPortfolio(assets)
       setTotalValue(assets.reduce((sum, asset) => sum + asset.value, 0))
-      setLastUpdated(new Date())
       setError(null)
     } catch (err) {
       console.error('Error fetching portfolio:', err)
@@ -97,8 +117,8 @@ export default function PortfolioPage() {
           </Link>
           <div className="ml-auto flex items-center gap-4">
             <Button variant="ghost" size="sm" className="gap-2">
-              <img
-                src="/placeholder.svg?height=32&width=32"
+              <Image
+                src="/placeholder.svg"
                 width={32}
                 height={32}
                 alt="Avatar"
@@ -116,7 +136,7 @@ export default function PortfolioPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Crypto Portfolio</h1>
               <p className="text-muted-foreground">
-                Last updated: {lastUpdated.toLocaleTimeString('en-US', { hour12: false })}
+                Last updated: {lastUpdated}
               </p>
             </div>
             <Button onClick={fetchPortfolio} disabled={isLoading} size="sm">
