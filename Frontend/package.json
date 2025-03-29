@@ -52,6 +52,8 @@
     "my-v0-project": "file:",
     "next": "^15.1.1",
     "next-themes": "latest",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^3.11.174",
     "react": "^18.2.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.2.0",
@@ -66,6 +68,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "postcss": "^8",
