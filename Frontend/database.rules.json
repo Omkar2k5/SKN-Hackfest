@@ -1,0 +1,66 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        
+        "budgets": {
+          "$budgetId": {
+            ".validate": "newData.hasChildren(['amount', 'category', 'description', 'merchants', 'createdAt', 'isActive', 'budgetReached', 'spent'])",
+            "amount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "spent": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "category": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "description": { ".validate": "newData.isString()" },
+            "createdAt": { ".validate": "newData.isNumber() && newData.val() <= now" },
+            "isActive": { ".validate": "newData.isBoolean()" },
+            "budgetReached": { ".validate": "newData.isBoolean()" },
+            "merchants": { ".validate": "newData.isArray()" },
+            "upiIds": { ".validate": "!newData.exists() || newData.isArray()" }
+          }
+        },
+        
+        "credit": {
+          "$transactionId": {
+            ".validate": "newData.hasChildren(['accountNumber', 'amount', 'merchantName', 'timestamp', 'transactionMode'])",
+            "accountNumber": { ".validate": "newData.isString()" },
+            "amount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "merchantName": { ".validate": "newData.isString()" },
+            "timestamp": { ".validate": "newData.isNumber() && newData.val() <= now" },
+            "transactionMode": { ".validate": "newData.isString()" },
+            "upiId": { ".validate": "!newData.exists() || newData.isString()" },
+            "uploadedAt": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() <= now)" }
+          }
+        },
+        
+        "debit": {
+          "$transactionId": {
+            ".validate": "newData.hasChildren(['accountNumber', 'amount', 'merchantName', 'timestamp', 'transactionMode'])",
+            "accountNumber": { ".validate": "newData.isString()" },
+            "amount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "merchantName": { ".validate": "newData.isString()" },
+            "timestamp": { ".validate": "newData.isNumber() && newData.val() <= now" },
+            "transactionMode": { ".validate": "newData.isString()" },
+            "upiId": { ".validate": "!newData.exists() || newData.isString()" },
+            "uploadedAt": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() <= now)" }
+          }
+        },
+        
+        "service_status": {
+          ".validate": "newData.isString()"
+        },
+        
+        "transactions": {
+          "test": {
+            ".validate": "newData.isString()"
+          }
+        },
+        
+        "$other": { ".validate": false }
+      }
+    },
+    
+    ".read": false,
+    ".write": false
+  }
+} 

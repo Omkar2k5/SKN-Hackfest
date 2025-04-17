@@ -14,27 +14,24 @@ import {
 import { useEffect, useState } from "react"
 import { ref, onValue, DataSnapshot } from "firebase/database"
 import { database } from "@/lib/firebase"
-import { subMonths } from "date-fns"
+import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { useRouter } from "next/navigation"
+import { subMonths, startOfMonth, endOfMonth } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { DashboardChart } from "@/components/dashboard-chart"
 import { DashboardNav } from "@/components/dashboard-nav"
-import { ExpensePieChart } from "@/components/expense-pie-chart"
+import ExpensePieChart from "@/components/expense-pie-chart"
 import { RecentTransactions } from "@/components/recent-transactions"
 import { BudgetStatus } from "@/components/budget-status"
-
-interface Transaction {
-  accountNumber: string
-  amount: number
-  merchantName: string
-  timestamp: number
-  transactionMode: string
-  upiId?: string
-}
+import { BaseTransaction, Transaction, Budget, MonthlyData, MerchantExpense } from "@/types/finance"
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const auth = getAuth()
+  const [user, setUser] = useState(auth.currentUser)
   const [totalBalance, setTotalBalance] = useState(0)
   const [totalIncome, setTotalIncome] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
@@ -42,6 +39,27 @@ export default function DashboardPage() {
   const [expenseChange, setExpenseChange] = useState(0)
   const [balanceChange, setBalanceChange] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // Data for child components
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
+  const [merchantExpenses, setMerchantExpenses] = useState<MerchantExpense[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
+  const [budgets, setBudgets] = useState<Budget[]>([])
+
+  // Handle authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push('/login')
+        return
+      }
+      setUser(currentUser)
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [auth, router])
 
   // Update balance whenever income or expenses change
   useEffect(() => {
@@ -55,87 +73,157 @@ export default function DashboardPage() {
     setBalanceChange(Number(balanceChangePercent.toFixed(1)))
   }, [totalIncome, totalExpenses])
 
+  // Calculate monthly data for the chart
+  const calculateMonthlyData = (creditData: Record<string, BaseTransaction>, debitData: Record<string, BaseTransaction>) => {
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(new Date(), i)
+      return {
+        month: date.toLocaleString('default', { month: 'short' }),
+        start: startOfMonth(date).getTime(),
+        end: endOfMonth(date).getTime()
+      }
+    }).reverse()
+
+    const monthlyData = last6Months.map(({ month, start, end }) => {
+      const monthlyIncome = Object.values(creditData || {})
+        .filter(tx => tx.timestamp >= start && tx.timestamp <= end)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+
+      const monthlyExpenses = Object.values(debitData || {})
+        .filter(tx => tx.timestamp >= start && tx.timestamp <= end)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+
+      return {
+        month,
+        income: monthlyIncome,
+        expenses: monthlyExpenses
+      }
+    })
+
+    setMonthlyData(monthlyData)
+  }
+
+  // Calculate merchant expenses for pie chart
+  const calculateMerchantExpenses = (debitData: Record<string, BaseTransaction>) => {
+    const merchantTotals = Object.values(debitData || {}).reduce((acc, tx) => {
+      const merchant = tx.merchantName
+      acc[merchant] = (acc[merchant] || 0) + tx.amount
+      return acc
+    }, {} as Record<string, number>)
+
+    const totalSpent = Object.values(merchantTotals).reduce((sum, amount) => sum + amount, 0)
+
+    const merchantExpenses = Object.entries(merchantTotals)
+      .map(([merchant, amount]) => ({
+        merchant,
+        amount
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5) // Top 5 merchants
+
+    setMerchantExpenses(merchantExpenses)
+  }
+
+  // Get recent transactions
+  const getRecentTransactions = (creditData: Record<string, BaseTransaction>, debitData: Record<string, BaseTransaction>) => {
+    const allTransactions = [
+      ...Object.values(creditData || {}).map(tx => ({ ...tx, type: 'credit' as const })),
+      ...Object.values(debitData || {}).map(tx => ({ ...tx, type: 'debit' as const }))
+    ]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5) // Last 5 transactions
+
+    setRecentTransactions(allTransactions)
+  }
+
   useEffect(() => {
+    if (!user) return
+
     try {
-      const creditRef = ref(database, 'credit')
-      const debitRef = ref(database, 'debit')
+      const userDataRef = ref(database, `users/${user.uid}`)
 
-      // Listen for credit transactions
-      onValue(creditRef, (snapshot: DataSnapshot) => {
+      const unsubscribe = onValue(userDataRef, (snapshot: DataSnapshot) => {
         try {
-          const creditData = snapshot.val() as Record<string, Transaction> | null
+          const userData = snapshot.val()
+          const creditData: Record<string, BaseTransaction> = userData?.credit || {}
+          const debitData: Record<string, BaseTransaction> = userData?.debit || {}
+          const budgetData = userData?.budgets || {}
+
+          // Process credit data
+          const creditTotal = Object.values(creditData).reduce((sum: number, transaction: BaseTransaction) => 
+            sum + transaction.amount, 0)
+          setTotalIncome(creditTotal)
           
-          if (creditData) {
-            const creditTotal = Object.values(creditData).reduce((sum, transaction) => 
-              sum + transaction.amount, 0)
-            setTotalIncome(creditTotal)
-            
-            // Calculate month-over-month change
-            const currentMonth = new Date().getMonth()
-            const currentMonthTransactions = Object.values(creditData).filter(tx => 
-              new Date(tx.timestamp).getMonth() === currentMonth
-            )
-            const lastMonthTransactions = Object.values(creditData).filter(tx => 
-              new Date(tx.timestamp).getMonth() === currentMonth - 1
-            )
-            
-            const currentMonthTotal = currentMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0)
-            const lastMonthTotal = lastMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0)
-            
-            const change = lastMonthTotal > 0 
-              ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 
-              : 0
-            setIncomeChange(Number(change.toFixed(1)))
-          } else {
-            // Reset income if no data
-            setTotalIncome(0)
-          }
+          // Process debit data
+          const debitTotal = Object.values(debitData).reduce((sum: number, transaction: BaseTransaction) => 
+            sum + transaction.amount, 0)
+          setTotalExpenses(debitTotal)
+
+          // Calculate credit month-over-month change
+          const currentMonth = new Date().getMonth()
+          const currentMonthCredits = Object.values(creditData).filter((tx: BaseTransaction) => 
+            new Date(tx.timestamp).getMonth() === currentMonth
+          )
+          const lastMonthCredits = Object.values(creditData).filter((tx: BaseTransaction) => 
+            new Date(tx.timestamp).getMonth() === currentMonth - 1
+          )
+          
+          const currentMonthCreditTotal = currentMonthCredits.reduce((sum: number, tx: BaseTransaction) => sum + tx.amount, 0)
+          const lastMonthCreditTotal = lastMonthCredits.reduce((sum: number, tx: BaseTransaction) => sum + tx.amount, 0)
+          
+          const creditChange = lastMonthCreditTotal > 0 
+            ? ((currentMonthCreditTotal - lastMonthCreditTotal) / lastMonthCreditTotal) * 100 
+            : 0
+          setIncomeChange(Number(creditChange.toFixed(1)))
+
+          // Calculate debit month-over-month change
+          const currentMonthDebits = Object.values(debitData).filter((tx: BaseTransaction) => 
+            new Date(tx.timestamp).getMonth() === currentMonth
+          )
+          const lastMonthDebits = Object.values(debitData).filter((tx: BaseTransaction) => 
+            new Date(tx.timestamp).getMonth() === currentMonth - 1
+          )
+          
+          const currentMonthDebitTotal = currentMonthDebits.reduce((sum: number, tx: BaseTransaction) => sum + tx.amount, 0)
+          const lastMonthDebitTotal = lastMonthDebits.reduce((sum: number, tx: BaseTransaction) => sum + tx.amount, 0)
+          
+          const debitChange = lastMonthDebitTotal > 0 
+            ? ((currentMonthDebitTotal - lastMonthDebitTotal) / lastMonthDebitTotal) * 100 
+            : 0
+          setExpenseChange(Number(debitChange.toFixed(1)))
+
+          // Update data visualizations
+          calculateMonthlyData(creditData, debitData)
+          calculateMerchantExpenses(debitData)
+
+          // Process transactions for RecentTransactions component
+          const allTransactions: Transaction[] = [
+            ...Object.entries(creditData).map(([id, tx]) => ({ ...tx, type: 'credit' as const })),
+            ...Object.entries(debitData).map(([id, tx]) => ({ ...tx, type: 'debit' as const }))
+          ]
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 5)
+          setRecentTransactions(allTransactions)
+
+          // Process budget data
+          const budgetsList = Object.entries(budgetData).map(([id, budget]: [string, any]) => ({
+            ...budget,
+            id
+          }))
+          setBudgets(budgetsList)
+
         } catch (err) {
-          console.error('Error processing credit data:', err)
-          setError('Error loading income data')
+          console.error('Error processing user data:', err)
+          setError('Error loading user data')
         }
       })
 
-      // Listen for debit transactions
-      onValue(debitRef, (snapshot: DataSnapshot) => {
-        try {
-          const debitData = snapshot.val() as Record<string, Transaction> | null
-          
-          if (debitData) {
-            const debitTotal = Object.values(debitData).reduce((sum, transaction) => 
-              sum + transaction.amount, 0)
-            setTotalExpenses(debitTotal)
-            
-            // Calculate month-over-month change
-            const currentMonth = new Date().getMonth()
-            const currentMonthTransactions = Object.values(debitData).filter(tx => 
-              new Date(tx.timestamp).getMonth() === currentMonth
-            )
-            const lastMonthTransactions = Object.values(debitData).filter(tx => 
-              new Date(tx.timestamp).getMonth() === currentMonth - 1
-            )
-            
-            const currentMonthTotal = currentMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0)
-            const lastMonthTotal = lastMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0)
-            
-            const change = lastMonthTotal > 0 
-              ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 
-              : 0
-            setExpenseChange(Number(change.toFixed(1)))
-          } else {
-            // Reset expenses if no data
-            setTotalExpenses(0)
-          }
-        } catch (err) {
-          console.error('Error processing debit data:', err)
-          setError('Error loading expense data')
-        }
-      })
+      return () => unsubscribe()
     } catch (err) {
-      console.error('Error setting up Firebase listeners:', err)
+      console.error('Error setting up Firebase listener:', err)
       setError('Error connecting to database')
     }
-  }, []) // Empty dependency array as we want this to run once on mount
+  }, [user])
 
   // Add a refresh button to manually trigger data fetch
   const handleRefresh = () => {
@@ -147,6 +235,14 @@ export default function DashboardPage() {
       ? ((balance / totalIncome) * 100)
       : 0
     setBalanceChange(Number(balanceChangePercent.toFixed(1)))
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (error) {
@@ -177,14 +273,22 @@ export default function DashboardPage() {
               <span className="sr-only">Refresh</span>
             </Button>
             <Button variant="ghost" size="sm" className="gap-2">
-              <img
-                src="/placeholder.svg?height=32&width=32"
-                width={32}
-                height={32}
-                alt="Avatar"
-                className="rounded-full"
-              />
-              <span>John Doe</span>
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  width={32}
+                  height={32}
+                  alt="Avatar"
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-medium">
+                    {user?.displayName?.[0] || user?.email?.[0] || 'U'}
+                  </span>
+                </div>
+              )}
+              <span>{user?.displayName || user?.email?.split('@')[0] || 'User'}</span>
             </Button>
           </div>
         </div>
@@ -195,7 +299,9 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, John! Here's an overview of your finances.</p>
+              <p className="text-muted-foreground">
+                Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'User'}! Here's an overview of your finances.
+              </p>
             </div>
           </div>
           <div className="space-y-4">
@@ -238,7 +344,7 @@ export default function DashboardPage() {
                   <CardDescription>Your financial activity for the past 6 months</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <DashboardChart />
+                  <DashboardChart data={monthlyData} />
                 </CardContent>
               </Card>
               <Card className="lg:col-span-3">
@@ -247,7 +353,7 @@ export default function DashboardPage() {
                   <CardDescription>Top merchants by spending amount</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ExpensePieChart />
+                  <ExpensePieChart data={merchantExpenses} />
                 </CardContent>
               </Card>
             </div>
@@ -258,7 +364,7 @@ export default function DashboardPage() {
                   <CardDescription>Your latest financial activity</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RecentTransactions />
+                  <RecentTransactions transactions={recentTransactions} />
                 </CardContent>
               </Card>
               <Card className="lg:col-span-3">
@@ -267,7 +373,7 @@ export default function DashboardPage() {
                   <CardDescription>Your spending by merchant</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <BudgetStatus />
+                  <BudgetStatus budgets={budgets} />
                 </CardContent>
               </Card>
             </div>

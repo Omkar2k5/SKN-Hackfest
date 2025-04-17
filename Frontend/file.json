@@ -1,0 +1,377 @@
+{
+  "users": {
+    "dirtdjm4aLhvIcoLZq8eDYzo65m2": {
+      "budgets": {
+        "budget_OMRD_zQ68lwSo5rhfvh": {
+          "amount": 200,
+          "budgetReached": true,
+          "category": "Grocery",
+          "createdAt": 1743156390333,
+          "description": "anything",
+          "isActive": false,
+          "merchants": 
+            "9371110123"
+          ,
+          "spent": 1204
+        },
+        "budget_OMREKN4IrdIZuAYawAI": {
+          "amount": 200,
+          "budgetReached": true,
+          "category": "Vallari",
+          "createdAt": 1743156735975,
+          "description": "abc",
+          "isActive": false,
+          "merchants": 
+            "9371110123"
+          ,
+          "spent": 800,
+          "upiIds": 
+            "9371110123@superyes"
+          
+        },
+        "budget_ONYWZKPdh8VcPD3Cp23": {
+          "amount": 200,
+          "budgetReached": false,
+          "category": "Mrunal",
+          "createdAt": 1744352725364,
+          "description": "snacks\n",
+          "isActive": true,
+          "merchants": 
+            "7798361881"
+          ,
+          "spent": 0,
+          "upiIds": 
+            "ferterterg"
+          
+        }
+      },
+      "credit": {
+        "credit_OMRG_I9u7uUm3rl9LGy": {
+          "accountNumber": "1714",
+          "amount": 1041,
+          "merchantName": "9371110123",
+          "timestamp": 1743157198745,
+          "transactionMode": "UPI",
+          "upiId": "9371110123@superyes"
+        },
+        "credit_OMVPgmQmBShE1npBioO": {
+          "accountNumber": "1714",
+          "amount": 1,
+          "merchantName": "vallaribhuse@okicici",
+          "timestamp": 1743226849122,
+          "transactionMode": "UPI",
+          "upiId": "vallaribhuse@okicici"
+        },
+        "credit_OMVfn71ZeBgeAhpZ_zx": {
+          "accountNumber": "1714",
+          "amount": 1,
+          "merchantName": "vallaribhuse@okicici",
+          "timestamp": 1743231331535,
+          "transactionMode": "UPI",
+          "upiId": "vallaribhuse@okicici"
+        },
+        "credit_OMVi8K1es4cnLUxRhIj": {
+          "accountNumber": "5457",
+          "amount": 1,
+          "merchantName": "mrunal sachin thamak thru IPPB",
+          "timestamp": 1743231947407,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_OMViQygCUgSPhmnqHTm": {
+          "accountNumber": "1714",
+          "amount": 1,
+          "merchantName": "vallaribhuse1@okaxis",
+          "timestamp": 1743232023154,
+          "transactionMode": "UPI",
+          "upiId": "vallaribhuse1@okaxis"
+        },
+        "credit_OMVjWK6Zsou4otPCZmL": {
+          "accountNumber": "5457",
+          "amount": 10,
+          "merchantName": "mrunal sachin thamak thru IPPB",
+          "timestamp": 1743232307875,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_OMVv72remS4oVUKFWSW": {
+          "accountNumber": "1714",
+          "amount": 1,
+          "merchantName": "vallaribhuse1@okaxis",
+          "timestamp": 1743235349450,
+          "transactionMode": "UPI",
+          "upiId": "vallaribhuse1@okaxis"
+        },
+        "credit_OMVv7D1cKpHgJ2vD12": {
+          "accountNumber": "0248",
+          "amount": 1,
+          "merchantName": "Unknown",
+          "timestamp": 1743235350724,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_OMW55kt1SLhpPHad9Fr": {
+          "accountNumber": "0248",
+          "amount": 1,
+          "merchantName": "Unknown",
+          "timestamp": 1743238228345,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_OMWPS_aObjA8zLNVRt": {
+          "accountNumber": "0248",
+          "amount": 100,
+          "merchantName": "Unknown",
+          "timestamp": 1743243562352,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_ONZ7QUtp0KUnAFC6bT": {
+          "accountNumber": "5678",
+          "amount": 10,
+          "merchantName": "sima adinath khande thru IPPB",
+          "timestamp": 1744362911918,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_ONZjvqINj3jYpjGm_b1": {
+          "accountNumber": "5678",
+          "amount": 1000,
+          "merchantName": "tanmay sachin thamak thru IPPB",
+          "timestamp": 1744373268041,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "credit_1738348200000": {
+          "amount": 28,
+          "merchantName": "to",
+          "timestamp": 1738348200000,
+          "transactionMode": "UPI",
+          "uploadedAt": 1743219207203
+        }
+      },
+      "debit": {
+        "debit_OMVU4FuXv8s_wpOza5S": {
+          "accountNumber": "5678",
+          "amount": 1,
+          "merchantName": "vallari nitin",
+          "timestamp": 1743227999480,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OMVVt_pgAKHls3EkxDm": {
+          "accountNumber": "5678",
+          "amount": 1,
+          "merchantName": "vallari nitin",
+          "timestamp": 1743228475956,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OMVYTlZLdb7UPj570Xp": {
+          "accountNumber": "5678",
+          "amount": 1,
+          "merchantName": "vallari nitin",
+          "timestamp": 1743229152544,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OMVfKJxmKGpb9ZWWQ8H": {
+          "accountNumber": "1714",
+          "amount": 30,
+          "merchantName": "paytmqr66g64o@ptys",
+          "timestamp": 1743231209483,
+          "transactionMode": "UPI",
+          "upiId": "paytmqr66g64o@ptys"
+        },
+        "debit_OMViAigMRLKCS4ZNGO": {
+          "accountNumber": "5678",
+          "amount": 1,
+          "merchantName": "vallari nitin",
+          "timestamp": 1743231958133,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OMVjVhlKvCTylK12fQJ": {
+          "accountNumber": "5678",
+          "amount": 10,
+          "merchantName": "vallari nitin",
+          "timestamp": 1743232306234,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OMWPcRi2aouCYP9C83L": {
+          "accountNumber": "1714",
+          "amount": 42,
+          "merchantName": "q999270770@ybl",
+          "timestamp": 1743243608578,
+          "transactionMode": "UPI",
+          "upiId": "q999270770@ybl"
+        },
+        "debit_ONYuQWAFXdWg9PEfjfV": {
+          "accountNumber": "5678",
+          "amount": 389,
+          "merchantName": "dominos pizza",
+          "timestamp": 1744359242011,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_ONZ5Nza0jzopyBfZgXV": {
+          "accountNumber": "5678",
+          "amount": 5,
+          "merchantName": "sima adinath k",
+          "timestamp": 1744362377382,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_ONZ5ccCEt8IdZBfkIH5": {
+          "accountNumber": "5678",
+          "amount": 5,
+          "merchantName": "sima adinath k",
+          "timestamp": 1744362441434,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_ONZBbGVEilRC1o5wtxe": {
+          "accountNumber": "5678",
+          "amount": 10,
+          "merchantName": "sima adinath k",
+          "timestamp": 1744364008723,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_ONsYgddGAWR2fJ4JrVt": {
+          "accountNumber": "5678",
+          "amount": 15,
+          "merchantName": "aarush uphar g",
+          "timestamp": 1744705604576,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OO1dSODYg_Z6XRrK1LU": {
+          "accountNumber": "5678",
+          "amount": 1,
+          "merchantName": "somnath vishwa",
+          "timestamp": 1744874887063,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OO2jnOCpH49q0aNnp": {
+          "accountNumber": "5678",
+          "amount": 50,
+          "merchantName": "pramila enterp",
+          "timestamp": 1744880991971,
+          "transactionMode": "UPI",
+          "upiId": ""
+        },
+        "debit_OO2hhJiMZLdXSqvg6zM": {
+          "accountNumber": "5678",
+          "amount": 60,
+          "merchantName": "muskan tayyab",
+          "timestamp": 1744892778118,
+          "transactionMode": "UPI",
+          "upiId": ""
+        }
+      },
+      "service_status": "running_1744651025668",
+      "transactions": {
+        "test": "connection_test"
+      }
+    },
+    "8ZaI2z2dA7fpNAC3Xkh6fMXYne92": {
+      "budgets": {
+        "budget1": {
+          "amount": 5000,
+          "budgetReached": false,
+          "category": "Food",
+          "createdAt": 1744892778120,
+          "description": "Monthly food budget",
+          "isActive": true,
+          "merchants": "restaurants",
+          "spent": 2500
+        },
+        "budget2": {
+          "amount": 2000,
+          "budgetReached": false,
+          "category": "Transportation",
+          "createdAt": 1744892778121,
+          "description": "Monthly transport",
+          "isActive": true,
+          "merchants": "uber",
+          "spent": 1000
+        }
+      },
+      "credit": {
+        "credit1": {
+          "accountNumber": "9876",
+          "amount": 5000,
+          "merchantName": "Salary Deposit",
+          "timestamp": 1744892778122,
+          "transactionMode": "NEFT",
+          "upiId": ""
+        }
+      },
+      "debit": {
+        "debit1": {
+          "accountNumber": "9876",
+          "amount": 1500,
+          "merchantName": "Amazon Shopping",
+          "timestamp": 1744892778123,
+          "transactionMode": "UPI",
+          "upiId": "amazon@upi"
+        }
+      },
+      "service_status": "running_1744892778124",
+      "transactions": {
+        "test": "connection_test"
+      }
+    },
+    "0mzZzVzqWRVP70RPV8AHF3WiLow2": {
+      "budgets": {
+        "budget1": {
+          "amount": 3000,
+          "budgetReached": false,
+          "category": "Shopping",
+          "createdAt": 1744892778125,
+          "description": "Monthly shopping",
+          "isActive": true,
+          "merchants": "shop1",
+          "spent": 1500
+        },
+        "budget2": {
+          "amount": 1000,
+          "budgetReached": true,
+          "category": "Entertainment",
+          "createdAt": 1744892778126,
+          "description": "Entertainment budget",
+          "isActive": false,
+          "merchants": "netflix",
+          "spent": 1000
+        }
+      },
+      "credit": {
+        "credit1": {
+          "accountNumber": "5432",
+          "amount": 3000,
+          "merchantName": "Freelance Payment",
+          "timestamp": 1744892778127,
+          "transactionMode": "IMPS",
+          "upiId": ""
+        }
+      },
+      "debit": {
+        "debit1": {
+          "accountNumber": "5432",
+          "amount": 800,
+          "merchantName": "Flipkart",
+          "timestamp": 1744892778128,
+          "transactionMode": "UPI",
+          "upiId": "flipkart@upi"
+        }
+      },
+      "service_status": "running_1744892778129",
+      "transactions": {
+        "test": "connection_test"
+      }
+    }
+  }
+}

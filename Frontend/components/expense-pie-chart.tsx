@@ -1,163 +1,69 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ref, onValue, DataSnapshot } from "firebase/database"
-import { database } from "@/lib/firebase"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
-import { isWithinInterval } from "date-fns"
-
-interface Transaction {
-  accountNumber: string
-  amount: number
-  merchantName: string
-  timestamp: number
-  transactionMode: string
-  upiId?: string
-}
-
-interface MerchantData {
-  name: string
-  value: number
-  color: string
-}
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { MerchantExpense } from '@/types/finance';
 
 interface ExpensePieChartProps {
-  dateRange?: {
-    from: Date
-    to: Date
-  }
+  data: MerchantExpense[];
 }
 
-// Predefined colors for merchants
 const COLORS = [
-  "#ef4444", // Red
-  "#3b82f6", // Blue
-  "#10b981", // Green
-  "#f59e0b", // Orange
-  "#8b5cf6", // Purple
-  "#ec4899", // Pink
-  "#06b6d4", // Cyan
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#84cc16"  // Lime
-]
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#8884d8',
+  '#82ca9d',
+  '#ffc658',
+  '#ff7c43',
+];
 
-export function ExpensePieChart({ dateRange }: ExpensePieChartProps) {
-  const [debitTransactions, setDebitTransactions] = useState<Transaction[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    try {
-      const debitRef = ref(database, 'debit')
-
-      onValue(debitRef, (snapshot: DataSnapshot) => {
-        try {
-          const debitData = snapshot.val() as Record<string, Transaction> | null
-          
-          if (debitData) {
-            let transactions = Object.values(debitData)
-            
-            // Filter by date range if provided
-            if (dateRange) {
-              transactions = transactions.filter(transaction => {
-                const transactionDate = new Date(transaction.timestamp)
-                return isWithinInterval(transactionDate, {
-                  start: dateRange.from,
-                  end: dateRange.to
-                })
-              })
-            }
-            
-            setDebitTransactions(transactions)
-          } else {
-            setDebitTransactions([])
-          }
-        } catch (err) {
-          console.error('Error processing debit data:', err)
-          setError('Error loading expense data')
-        }
-      })
-    } catch (err) {
-      console.error('Error setting up Firebase listener:', err)
-      setError('Error connecting to database')
-    }
-  }, [dateRange])
-
-  if (error) {
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
     return (
-      <div className="text-center text-red-600 p-4">
-        <p>{error}</p>
+      <div className="bg-white p-2 rounded-lg shadow-md border">
+        <p className="text-sm font-medium">{payload[0].name}</p>
+        <p className="text-sm">₹{payload[0].value.toFixed(2)}</p>
       </div>
-    )
+    );
   }
+  return null;
+};
 
-  if (debitTransactions.length === 0) {
+export default function ExpensePieChart({ data }: ExpensePieChartProps) {
+  if (!data || data.length === 0) {
     return (
-      <div className="text-center text-muted-foreground p-4">
-        No expense data available
+      <div className="flex items-center justify-center h-[300px]">
+        <p className="text-gray-500">No expense data available</p>
       </div>
-    )
-  }
-
-  // Group transactions by merchant and calculate totals
-  const merchantTotals = debitTransactions.reduce((acc, transaction) => {
-    const merchantName = transaction.merchantName
-    if (!acc[merchantName]) {
-      acc[merchantName] = {
-        name: merchantName,
-        value: 0,
-        color: COLORS[Object.keys(acc).length % COLORS.length]
-      }
-    }
-    acc[merchantName].value += transaction.amount
-    return acc
-  }, {} as Record<string, MerchantData>)
-
-  // Convert to array and sort by value
-  const data = Object.values(merchantTotals)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10) // Show top 10 merchants
-
-  const totalAmount = data.reduce((sum, item) => sum + item.value, 0)
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      return (
-        <div className="bg-white p-2 border rounded-lg shadow-sm">
-          <p className="font-medium">{data.name}</p>
-          <p className="text-sm">₹{data.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground">
-            {((data.value / totalAmount) * 100).toFixed(1)}% of total
-          </p>
-        </div>
-      )
-    }
-    return null
+    );
   }
 
   return (
-    <div className="h-[300px] w-full">
+    <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
+            labelLine={false}
             outerRadius={80}
-            paddingAngle={2}
-            dataKey="value"
+            fill="#8884d8"
+            dataKey="amount"
+            nameKey="merchant"
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
         </PieChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }
 
