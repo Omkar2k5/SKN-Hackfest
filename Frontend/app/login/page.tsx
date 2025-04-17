@@ -1,20 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import { motion } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/icons"
-import { signInWithEmail, signInWithGoogle } from "@/lib/firebase-auth"
+import { signInWithEmail, signInWithGoogle, onAuthStateChanged, getCurrentUser } from "@/lib/firebase-auth"
 
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
+
+  useEffect(() => {
+    // Check for existing session
+    const unsubscribe = onAuthStateChanged((user) => {
+      if (user) {
+        router.push("/home")
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router])
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -31,6 +44,9 @@ export default function LoginPage() {
         throw new Error(signInError)
       }
       if (user) {
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true")
+        }
         router.push("/home")
       }
     } catch (err: any) {
@@ -50,6 +66,9 @@ export default function LoginPage() {
         throw new Error(signInError)
       }
       if (user) {
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true")
+        }
         router.push("/home")
       }
     } catch (err: any) {
@@ -60,8 +79,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full space-y-8"
+      >
         <div className="text-center">
           <div className="flex justify-center">
             <Link href="/home">
@@ -74,27 +98,37 @@ export default function LoginPage() {
               />
             </Link>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-white">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-400">
             Don't have an account?{" "}
-            <Link href="/signup" className="font-medium text-primary hover:text-primary/90">
+            <Link href="/signup" className="font-medium text-primary hover:text-primary/90 transition-colors">
               Sign up
             </Link>
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-900/50 border border-red-800 text-red-200 px-4 py-3 rounded-xl text-sm backdrop-blur-sm"
+          >
             {error}
-          </div>
+          </motion.div>
         )}
 
-        <form onSubmit={handleEmailSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm space-y-4">
+        <motion.form 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          onSubmit={handleEmailSubmit} 
+          className="mt-8 space-y-6"
+        >
+          <div className="rounded-xl shadow-sm space-y-4">
             <div>
-              <Label htmlFor="email" className="sr-only">
+              <Label htmlFor="email" className="text-gray-300">
                 Email address
               </Label>
               <Input
@@ -103,12 +137,12 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 placeholder="Email address"
               />
             </div>
             <div>
-              <Label htmlFor="password" className="sr-only">
+              <Label htmlFor="password" className="text-gray-300">
                 Password
               </Label>
               <Input
@@ -117,7 +151,7 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 placeholder="Password"
               />
             </div>
@@ -129,15 +163,17 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-700 rounded bg-gray-800/50"
               />
-              <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
                 Remember me
               </Label>
             </div>
 
             <div className="text-sm">
-              <Link href="/forgot-password" className="font-medium text-primary hover:text-primary/90">
+              <Link href="/forgot-password" className="font-medium text-primary hover:text-primary/90 transition-colors">
                 Forgot your password?
               </Link>
             </div>
@@ -146,7 +182,7 @@ export default function LoginPage() {
           <div>
             <Button
               type="submit"
-              className="group relative w-full"
+              className="group relative w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -166,10 +202,10 @@ export default function LoginPage() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                <span className="px-2 bg-gray-900 rounded-full text-gray-400 text-white">or continue with</span>
               </div>
             </div>
 
@@ -177,7 +213,7 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 transition-all duration-300 text-white"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
               >
@@ -186,8 +222,8 @@ export default function LoginPage() {
               </Button>
             </div>
           </div>
-        </form>
-      </div>
+        </motion.form>
+      </motion.div>
     </div>
   )
 } 
