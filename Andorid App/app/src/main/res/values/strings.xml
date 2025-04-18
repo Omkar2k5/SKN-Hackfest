@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Smart Fianace Tracker</string>
+    <string name="app_name">Smart Finance Tracker</string>
+    <string name="app_logo">App Logo</string>
+    <!-- Auth strings -->
+    <string name="error_invalid_email">Invalid email address</string>
+    <string name="error_invalid_password">Password must be at least 6 characters</string>
+    <string name="error_passwords_dont_match">Passwords do not match</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="error_auth_failed">Authentication failed</string>
+    <string name="error_google_sign_in">Google sign in failed</string>
 </resources>

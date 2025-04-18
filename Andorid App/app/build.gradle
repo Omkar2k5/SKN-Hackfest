@@ -1,0 +1,18 @@
+dependencies {
+    // Default dependencies
+    // ... existing code ...
+
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:32.7.1')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-database'
+    
+    // Google Sign In
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    
+    // Material Design
+    implementation 'com.google.android.material:material:1.11.0'
+}
+
+// Add this at the bottom of the file
+apply plugin: 'com.google.gms.google-services' 
