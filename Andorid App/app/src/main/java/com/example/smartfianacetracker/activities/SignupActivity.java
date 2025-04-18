@@ -1,4 +1,4 @@
-package com.sknhackfest.app.activities;
+package com.example.smartfianacetracker.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,8 +15,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.sknhackfest.app.R;
-import com.sknhackfest.app.utils.FirebaseManager;
+import com.example.smartfianacetracker.R;
+import com.example.smartfianacetracker.utils.FirebaseManager;
 
 public class SignupActivity extends AppCompatActivity {
     private TextInputLayout emailLayout, passwordLayout, confirmPasswordLayout;

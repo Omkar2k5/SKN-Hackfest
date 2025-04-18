@@ -1,7 +1,8 @@
-package com.sknhackfest.app.activities;
+package com.example.smartfianacetracker.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -16,10 +17,11 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.sknhackfest.app.R;
-import com.sknhackfest.app.utils.FirebaseManager;
+import com.example.smartfianacetracker.R;
+import com.example.smartfianacetracker.utils.FirebaseManager;
 
 public class LoginActivity extends AppCompatActivity {
+    private static final String TAG = "LoginActivity";
     private TextInputLayout emailLayout, passwordLayout;
     private TextInputEditText emailInput, passwordInput;
     private MaterialButton loginButton, googleButton;
@@ -108,21 +110,53 @@ public class LoginActivity extends AppCompatActivity {
     private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            Log.d(TAG, "Google Sign In successful, account email: " + account.getEmail());
+            
+            setLoading(true);
             firebaseManager.signInWithGoogle(account)
                 .addOnCompleteListener(task -> {
                     setLoading(false);
                     if (task.isSuccessful()) {
+                        Log.d(TAG, "Firebase authentication successful");
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {
-                        showError(task.getException() != null ? 
-                            task.getException().getMessage() : 
-                            "Google sign in failed");
+                        String errorMessage = "Google sign in failed";
+                        if (task.getException() != null) {
+                            Log.e(TAG, "Firebase authentication failed", task.getException());
+                            errorMessage = task.getException().getMessage();
+                        }
+                        showError(errorMessage);
                     }
                 });
         } catch (ApiException e) {
             setLoading(false);
-            showError("Google sign in failed: " + e.getStatusCode());
+            Log.e(TAG, "Google sign in failed", e);
+            String errorMessage;
+            switch (e.getStatusCode()) {
+                case 12500: // SIGN_IN_FAILED
+                    errorMessage = "Google Play Services update required";
+                    break;
+                case 7: // NETWORK_ERROR
+                    errorMessage = "Network error, please check your connection";
+                    break;
+                case 5: // SIGN_IN_CANCELLED
+                    errorMessage = "Sign in cancelled";
+                    break;
+                case 13: // SIGN_IN_REQUIRED
+                    errorMessage = "Please sign in with your Google account";
+                    break;
+                case 8: // INTERNAL_ERROR
+                    errorMessage = "Internal error occurred, please try again";
+                    break;
+                case 10: // DEVELOPER_ERROR
+                    errorMessage = "Google Sign In configuration error";
+                    Log.e(TAG, "Developer error: Check if the SHA-1 fingerprint is configured in Firebase Console");
+                    break;
+                default:
+                    errorMessage = "Google sign in failed: " + e.getStatusCode();
+            }
+            showError(errorMessage);
         }
     }
 

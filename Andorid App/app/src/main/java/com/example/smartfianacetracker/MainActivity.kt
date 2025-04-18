@@ -2,14 +2,17 @@ package com.example.smartfianacetracker
 
 import android.Manifest
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.preference.PreferenceManager
 import com.example.smartfianacetracker.databinding.ActivityMainBinding
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.FirebaseApp
@@ -19,6 +22,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var isServiceRunning = false
     private lateinit var serviceToggle: SwitchMaterial
+    private lateinit var sharedPreferences: SharedPreferences
+
+    private val requiredPermissions = mutableListOf(
+        Manifest.permission.RECEIVE_SMS,
+        Manifest.permission.READ_SMS
+    ).apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -38,23 +51,98 @@ class MainActivity : AppCompatActivity() {
             // Initialize Firebase structure
             initializeFirebaseStructure()
             
-            // Check permissions and start service
-            checkAndRequestPermissions()
+            // Initialize preferences and toggle
+            setupPreferencesAndToggle()
 
-            updateStatusText("App initialized successfully")
-            Log.d(TAG, "MainActivity onCreate completed")
-
-            serviceToggle = findViewById(R.id.serviceToggle)
-            serviceToggle.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    startBackgroundService()
-                } else {
-                    stopBackgroundService()
-                }
+            // Check permissions immediately when app starts
+            if (!areAllPermissionsGranted()) {
+                showPermissionExplanationDialog()
+            } else {
+                initializeServiceIfEnabled()
             }
+
+            Log.d(TAG, "MainActivity onCreate completed")
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate", e)
             handleError("Error initializing app", e)
+        }
+    }
+
+    private fun setupPreferencesAndToggle() {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        serviceToggle = findViewById(R.id.serviceToggle)
+
+        // Initialize switch state from preferences
+        serviceToggle.isChecked = sharedPreferences.getBoolean("service_enabled", false)
+
+        serviceToggle.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                if (areAllPermissionsGranted()) {
+                    startSmsService()
+                } else {
+                    showPermissionExplanationDialog()
+                    serviceToggle.isChecked = false
+                }
+            } else {
+                stopSmsService()
+            }
+            sharedPreferences.edit().putBoolean("service_enabled", isChecked).apply()
+        }
+    }
+
+    private fun areAllPermissionsGranted(): Boolean {
+        return requiredPermissions.all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun showPermissionExplanationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Permissions Required")
+            .setMessage("This app needs SMS and notification permissions to monitor your financial transactions through SMS messages. Please grant these permissions to continue.")
+            .setPositiveButton("Grant Permissions") { _, _ ->
+                requestPermissions()
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                Toast.makeText(this, "App requires permissions to function properly", Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun requestPermissions() {
+        ActivityCompat.requestPermissions(
+            this,
+            requiredPermissions.toTypedArray(),
+            PERMISSIONS_REQUEST_CODE
+        )
+    }
+
+    private fun initializeServiceIfEnabled() {
+        if (sharedPreferences.getBoolean("service_enabled", false)) {
+            startSmsService()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE -> {
+                if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                    Log.d(TAG, "All permissions granted")
+                    Toast.makeText(this, "Permissions granted successfully", Toast.LENGTH_SHORT).show()
+                    initializeServiceIfEnabled()
+                } else {
+                    Log.w(TAG, "Some permissions denied")
+                    Toast.makeText(this, "App needs all permissions to function properly", Toast.LENGTH_LONG).show()
+                    serviceToggle.isChecked = false
+                    sharedPreferences.edit().putBoolean("service_enabled", false).apply()
+                }
+            }
         }
     }
 
@@ -75,11 +163,9 @@ class MainActivity : AppCompatActivity() {
             
             val ref = database.getReference("transactions")
             
-            // Test connection
             ref.child("test").setValue("connection_test")
                 .addOnSuccessListener {
                     Log.d(TAG, "Firebase connection test successful")
-                    updateStatusText("Database Connected")
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "Firebase connection test failed", e)
@@ -91,124 +177,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkAndRequestPermissions() {
-        try {
-            Log.d(TAG, "Checking permissions")
-            val permissions = mutableListOf(
-                Manifest.permission.RECEIVE_SMS,
-                Manifest.permission.READ_SMS
-            )
-
-            // Add POST_NOTIFICATIONS permission for Android 13+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-
-            val permissionsToRequest = permissions.filter {
-                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-            }.toTypedArray()
-
-            if (permissionsToRequest.isEmpty()) {
-                Log.d(TAG, "All permissions granted")
-                startSmsService()
-            } else {
-                Log.d(TAG, "Requesting permissions: ${permissionsToRequest.joinToString()}")
-                ActivityCompat.requestPermissions(
-                    this,
-                    permissionsToRequest,
-                    PERMISSIONS_REQUEST_CODE
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking permissions", e)
-            handleError("Error checking permissions", e)
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        try {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-            if (requestCode == PERMISSIONS_REQUEST_CODE) {
-                if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                    Log.d(TAG, "All permissions granted")
-                    startSmsService()
-                    updateStatusText("Service started successfully")
-                } else {
-                    Log.w(TAG, "Some permissions denied")
-                    updateStatusText("Permissions required to monitor SMS")
-                    Toast.makeText(this, "App needs permissions to work properly", Toast.LENGTH_LONG).show()
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in permission result", e)
-            handleError("Error handling permissions", e)
-        }
-    }
-
     private fun startSmsService() {
         try {
-            if (!isServiceRunning) {
-                Log.d(TAG, "Starting SMS service")
-                val serviceIntent = Intent(this, SmsService::class.java)
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent)
-                } else {
-                    startService(serviceIntent)
-                }
-                
-                isServiceRunning = true
-                updateStatusText("SMS Monitoring Service is Running")
-                
-                // Schedule periodic service check
-                scheduleServiceCheck()
+            val serviceIntent = Intent(this, SmsService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
             } else {
-                Log.d(TAG, "Service is already running")
+                startService(serviceIntent)
             }
+            Toast.makeText(this, "SMS monitoring service started", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e(TAG, "Error starting service", e)
-            handleError("Error starting SMS service", e)
+            Log.e(TAG, "Error starting service: ${e.message}")
+            Toast.makeText(this, "Failed to start service", Toast.LENGTH_SHORT).show()
+            serviceToggle.isChecked = false
+            sharedPreferences.edit().putBoolean("service_enabled", false).apply()
         }
     }
 
-    private fun scheduleServiceCheck() {
-        // Check service status every 15 minutes
-        android.os.Handler().postDelayed({
-            if (!isServiceRunning) {
-                startSmsService()
-            }
-            scheduleServiceCheck()
-        }, 15 * 60 * 1000) // 15 minutes
-    }
-
-    private fun updateStatusText(status: String) {
+    private fun stopSmsService() {
         try {
-            binding.statusText.text = status
-            Log.d(TAG, "Status updated: $status")
+            stopService(Intent(this, SmsService::class.java))
+            Toast.makeText(this, "SMS monitoring service stopped", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e(TAG, "Error updating status text", e)
+            Log.e(TAG, "Error stopping service: ${e.message}")
+            Toast.makeText(this, "Failed to stop service", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun handleError(message: String, error: Exception) {
         val errorMessage = "$message: ${error.message}"
         Log.e(TAG, errorMessage, error)
-        updateStatusText("Error: $message")
         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
-    }
-
-    private fun startBackgroundService() {
-        val serviceIntent = Intent(this, BackgroundService::class.java)
-        startService(serviceIntent)
-    }
-    
-    private fun stopBackgroundService() {
-        val serviceIntent = Intent(this, BackgroundService::class.java)
-        stopService(serviceIntent)
     }
 
     companion object {

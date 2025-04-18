@@ -1,4 +1,4 @@
-package com.sknhackfest.app;
+package com.example.smartfianacetracker;
 
 import android.app.Application;
 import com.google.firebase.FirebaseApp;
@@ -13,9 +13,9 @@ public class SmartFinanceApp extends Application {
         // Initialize Firebase
         FirebaseApp.initializeApp(this);
         
-        // Initialize Google Sign In
+        // Initialize Google Sign In with web client ID
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestIdToken("687898768842-016uetfn4soao9j866tbn1hg50d2dr1k.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
     }

@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "687898768842",
+    "firebase_url": "https://skn-hackfest-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "skn-hackfest",
     "storage_bucket": "skn-hackfest.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.smartfianacetracker"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "687898768842-tupjmo38a2ilsneqpt1ev7m8korntu1d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartfianacetracker",
+            "certificate_hash": "080064ee23aebb1d014fb2be7e86a4a39289f59b"
+          }
+        },
+        {
+          "client_id": "687898768842-016uetfn4soao9j866tbn1hg50d2dr1k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCTn42mYS7wCWJdPn5Qpn2viJR0X9hz51c"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "687898768842-016uetfn4soao9j866tbn1hg50d2dr1k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -1,4 +1,4 @@
-package com.sknhackfest.app.utils;
+package com.example.smartfianacetracker.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -9,6 +9,8 @@ public class PreferenceManager {
     private static final String KEY_USER_EMAIL = "user_email";
     private static final String KEY_AUTH_TOKEN = "auth_token";
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
+    private static final String KEY_SERVICE_RUNNING = "is_service_running";
+    private static final String KEY_LAST_SMS_TIMESTAMP = "last_sms_timestamp";
 
     private final SharedPreferences sharedPreferences;
 
@@ -39,6 +41,26 @@ public class PreferenceManager {
 
     public String getAuthToken() {
         return sharedPreferences.getString(KEY_AUTH_TOKEN, null);
+    }
+
+    public void setServiceRunning(boolean isRunning) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(KEY_SERVICE_RUNNING, isRunning);
+        editor.apply();
+    }
+
+    public boolean isServiceRunning() {
+        return sharedPreferences.getBoolean(KEY_SERVICE_RUNNING, false);
+    }
+
+    public void updateLastSmsTimestamp(long timestamp) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(KEY_LAST_SMS_TIMESTAMP, timestamp);
+        editor.apply();
+    }
+
+    public long getLastSmsTimestamp() {
+        return sharedPreferences.getLong(KEY_LAST_SMS_TIMESTAMP, 0);
     }
 
     public void clearSession() {
