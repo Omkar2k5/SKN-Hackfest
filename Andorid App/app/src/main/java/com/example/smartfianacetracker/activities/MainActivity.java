@@ -3,7 +3,7 @@ package com.example.smartfianacetracker.activities;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.example.smartfianacetracker.R;
 import com.example.smartfianacetracker.SmsService;
 import com.example.smartfianacetracker.utils.PreferenceManager;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
     private SwitchMaterial serviceToggle;
     private PreferenceManager preferenceManager;
     private Toolbar toolbar;
+    private MaterialButton linkedinButton;
+    private MaterialButton githubButton;
 
     private final String[] REQUIRED_PERMISSIONS = {
         Manifest.permission.RECEIVE_SMS,
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupToolbar();
         setupServiceToggle();
+        setupSocialButtons();
         
         // Show permission dialog if permissions not granted
         if (!checkPermissions()) {
@@ -73,6 +77,21 @@ public class MainActivity extends AppCompatActivity {
         if (isServiceRunning && checkPermissions()) {
             startSmsService();
         }
+    }
+
+    private void setupSocialButtons() {
+        linkedinButton = findViewById(R.id.linkedinButton);
+        githubButton = findViewById(R.id.githubButton);
+
+        linkedinButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Omkar2k5"));
+            startActivity(intent);
+        });
+
+        githubButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Omkar2k5"));
+            startActivity(intent);
+        });
     }
 
     private void updateServiceIndicator(boolean isRunning) {
