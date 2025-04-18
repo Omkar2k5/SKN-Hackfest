@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, BarChart3, Brain, CreditCard, LogOut, PiggyBank, TrendingUp, User } from "lucide-react"
+import { ArrowRight, BarChart3, Brain, CreditCard, LogOut, PiggyBank, TrendingUp, User, Download } from "lucide-react"
 import Script from "next/script"
 import { useEffect, useState } from "react"
 import { getCurrentUser, onAuthStateChanged, signOut } from "@/lib/firebase-auth"
@@ -182,21 +182,33 @@ export default function HomePage() {
             <div className="max-w-2xl space-y-6 animate-fade-in">
               <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-6xl xl:text-7xl/none text-gray-900">
-                  Smart Budgeting Powered by AI
+                  Smart Financial Management
                 </h1>
                 <p className="max-w-[600px] text-gray-700 md:text-xl text-lg mt-4">
-                  Take control of your finances with our AI-powered budgeting tools. Track expenses, set goals, and get
-                  personalized insights.
+                  Track expenses, manage budgets, and monitor your crypto portfolio with AI-powered insights
                 </p>
                 <div className="flex flex-col gap-4 min-[400px]:flex-row pt-6">
-                  <Link href="/dashboard">
-                    <Button size="lg" className="gap-1.5 hover:scale-105 transition-transform duration-300 pointer-events-auto">
-                      Get Started <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/portfolio">
-                    <Button size="lg" variant="outline" className="gap-1.5 hover:scale-105 transition-transform duration-300 pointer-events-auto">
-                      View Portfolio <TrendingUp className="h-4 w-4" />
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = '/financebuddy.apk';
+                      link.download = 'financebuddy.apk';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    size="lg"
+                    className="gap-1.5 hover:scale-105 transition-transform duration-300 pointer-events-auto"
+                  >
+                    Download Android Application <Download className="h-4 w-4" />
+                  </Button>
+                  <Link href={user ? "/dashboard" : "/login"}>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="gap-1.5 hover:scale-105 transition-transform duration-300 pointer-events-auto"
+                    >
+                      View Dashboard <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
