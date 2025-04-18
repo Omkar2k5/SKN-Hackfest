@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 30,
-    borderBottom: 2,
+    borderBottomWidth: 2,
     borderBottomColor: '#2563eb',
     paddingBottom: 15,
     alignItems: 'center',
@@ -33,14 +33,13 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     backgroundColor: '#f8fafc',
     padding: 15,
-    borderRadius: 4,
   },
   sectionTitle: {
     fontSize: 18,
     marginBottom: 15,
     color: '#1e40af',
     fontWeight: 'bold',
-    borderBottom: 1,
+    borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     paddingBottom: 8,
   },
@@ -50,7 +49,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingVertical: 4,
     width: '100%',
-    gap: 20,
   },
   label: {
     fontSize: 12,
@@ -78,7 +76,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 8,
     backgroundColor: '#ffffff',
-    borderRadius: 4,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -87,7 +84,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
     width: '100%',
-    gap: 20,
   },
   transactionDetails: {
     fontSize: 10,
@@ -99,7 +95,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#f1f5f9',
     padding: 8,
-    borderRadius: 4,
     textAlign: 'center',
   },
   summaryBox: {
@@ -107,7 +102,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#ffffff',
     padding: 15,
-    borderRadius: 4,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     marginBottom: 15,
@@ -142,6 +136,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 10,
     color: '#64748b',
+  },
+  transactionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 4,
+    padding: 8,
+    backgroundColor: '#f8f9fa',
+  },
+  transactionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  transactionCategory: {
+    fontSize: 10,
+    color: '#718096',
+    marginTop: 2,
+  },
+  transactionAmount: {
+    alignItems: 'flex-end',
+  },
+  transactionDate: {
+    fontSize: 10,
+    color: '#718096',
+    marginTop: 2,
   },
 });
 
@@ -248,44 +268,51 @@ export const FinancialReportPDF = ({
 
         <PDFView style={styles.section}>
           <PDFText style={styles.sectionTitle}>Income Sources</PDFText>
-          <PDFView style={styles.row}>
-            <PDFText style={styles.label}>Source</PDFText>
-            <PDFView style={styles.valueContainer}>
-              <PDFText style={[styles.value, styles.valuePositive]}>
-                ₹{totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </PDFText>
+          {incomeData.map((income, index) => (
+            <PDFView key={index} style={styles.row}>
+              <PDFText style={styles.label}>{income.name}</PDFText>
+              <PDFView style={styles.valueContainer}>
+                <PDFText style={[styles.value, styles.valuePositive]}>
+                  ₹{income.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </PDFText>
+              </PDFView>
             </PDFView>
-          </PDFView>
+          ))}
         </PDFView>
 
         <PDFView style={styles.section}>
           <PDFText style={styles.sectionTitle}>Expense Breakdown</PDFText>
-          <PDFView style={styles.row}>
-            <PDFText style={styles.label}>Category</PDFText>
-            <PDFView style={styles.valueContainer}>
-              <PDFText style={[styles.value, styles.valueNegative]}>
-                ₹{totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </PDFText>
+          {expenseData.map((expense, index) => (
+            <PDFView key={index} style={styles.row}>
+              <PDFText style={styles.label}>{expense.name}</PDFText>
+              <PDFView style={styles.valueContainer}>
+                <PDFText style={[styles.value, styles.valueNegative]}>
+                  ₹{expense.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </PDFText>
+              </PDFView>
             </PDFView>
-          </PDFView>
+          ))}
         </PDFView>
 
         <PDFView style={styles.section}>
           <PDFText style={styles.sectionTitle}>Recent Transactions</PDFText>
           {creditTransactions.slice(0, 5).map((transaction, index) => (
-            <PDFView key={index} style={styles.transaction}>
-              <PDFView style={styles.transactionHeader}>
-                <PDFText style={[styles.label, { color: '#1e293b' }]}>{transaction.merchantName}</PDFText>
-                <PDFView style={styles.valueContainer}>
-                  <PDFText style={[styles.value, styles.valuePositive]}>
-                    +₹{transaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </PDFText>
-                </PDFView>
-              </PDFView>
+            <PDFView key={index} style={styles.transactionRow}>
               <PDFView style={styles.transactionDetails}>
-                <PDFText>{format(new Date(transaction.timestamp), 'MMM dd, yyyy HH:mm')} • {transaction.transactionMode}</PDFText>
-                <PDFText>A/C: {transaction.accountNumber}</PDFText>
-                {transaction.upiId && <PDFText>UPI: {transaction.upiId}</PDFText>}
+                <PDFText style={styles.transactionTitle}>{transaction.merchantName}</PDFText>
+                <PDFText style={styles.transactionCategory}>{transaction.transactionMode}</PDFText>
+              </PDFView>
+              <PDFView style={styles.transactionAmount}>
+                <PDFText style={[styles.value, transaction.amount > 0 ? styles.valuePositive : styles.valueNegative]}>
+                  ₹{Math.abs(transaction.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </PDFText>
+                <PDFText style={styles.transactionDate}>
+                  {new Date(transaction.timestamp).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </PDFText>
               </PDFView>
             </PDFView>
           ))}

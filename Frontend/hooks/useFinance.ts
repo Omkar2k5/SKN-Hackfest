@@ -44,6 +44,7 @@ export const useFinance = () => {
     try {
       await initializeUserData();
     } catch (err: any) {
+      console.error('Error initializing user data:', err);
       setError(err.message);
     }
   };
@@ -59,6 +60,9 @@ export const useFinance = () => {
       setLoading(true);
       setError(null);
       
+      // First ensure user data is initialized
+      await initializeUser();
+      
       const [budgetsData, creditsData, debitsData, summaryData] = await Promise.all([
         getBudgets(),
         getTransactions('credit'),
@@ -71,6 +75,7 @@ export const useFinance = () => {
       setDebits(debitsData);
       setSummary(summaryData);
     } catch (err: any) {
+      console.error('Error loading data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -81,7 +86,6 @@ export const useFinance = () => {
   useEffect(() => {
     const handleUserData = async () => {
       if (user) {
-        await initializeUser();
         await loadData();
       } else {
         // Clear data when user logs out
@@ -98,30 +102,36 @@ export const useFinance = () => {
 
   // Budget operations
   const createBudget = async (budget: Omit<Budget, 'id' | 'budgetReached' | 'createdAt' | 'isActive' | 'spent'>) => {
+    if (!user) throw new Error('No user logged in');
     try {
       await addBudget(budget);
       await loadData();
     } catch (err: any) {
+      console.error('Error creating budget:', err);
       setError(err.message);
       throw err;
     }
   };
 
   const modifyBudget = async (budgetId: string, updates: Partial<Budget>) => {
+    if (!user) throw new Error('No user logged in');
     try {
       await updateBudget(budgetId, updates);
       await loadData();
     } catch (err: any) {
+      console.error('Error modifying budget:', err);
       setError(err.message);
       throw err;
     }
   };
 
   const removeBudget = async (budgetId: string) => {
+    if (!user) throw new Error('No user logged in');
     try {
       await deleteBudget(budgetId);
       await loadData();
     } catch (err: any) {
+      console.error('Error removing budget:', err);
       setError(err.message);
       throw err;
     }
@@ -132,10 +142,12 @@ export const useFinance = () => {
     transaction: Omit<Transaction, 'id' | 'timestamp'>,
     type: 'credit' | 'debit'
   ) => {
+    if (!user) throw new Error('No user logged in');
     try {
       await addTransaction(transaction, type);
       await loadData();
     } catch (err: any) {
+      console.error('Error creating transaction:', err);
       setError(err.message);
       throw err;
     }
@@ -146,20 +158,24 @@ export const useFinance = () => {
     type: 'credit' | 'debit',
     updates: Partial<Transaction>
   ) => {
+    if (!user) throw new Error('No user logged in');
     try {
       await updateTransaction(transactionId, type, updates);
       await loadData();
     } catch (err: any) {
+      console.error('Error modifying transaction:', err);
       setError(err.message);
       throw err;
     }
   };
 
   const removeTransaction = async (transactionId: string, type: 'credit' | 'debit') => {
+    if (!user) throw new Error('No user logged in');
     try {
       await deleteTransaction(transactionId, type);
       await loadData();
     } catch (err: any) {
+      console.error('Error removing transaction:', err);
       setError(err.message);
       throw err;
     }

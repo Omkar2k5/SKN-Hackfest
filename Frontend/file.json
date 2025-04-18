@@ -1,6 +1,6 @@
 {
   "users": {
-    "dirtdjm4aLhvIcoLZq8eDYzo65m2": {
+    "0mzZzVzqWRVP70RPV8AHF3WiLow2": {
       "budgets": {
         "budget_OMRD_zQ68lwSo5rhfvh": {
           "amount": 200,
@@ -325,7 +325,7 @@
         "test": "connection_test"
       }
     },
-    "0mzZzVzqWRVP70RPV8AHF3WiLow2": {
+    "dirtdjm4aLhvIcoLZq8eDYzo65m2": {
       "budgets": {
         "budget1": {
           "amount": 3000,

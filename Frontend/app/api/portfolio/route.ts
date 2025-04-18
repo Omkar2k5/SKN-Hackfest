@@ -1,19 +1,60 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { getDatabase, ref, get } from 'firebase/database'
+import { initializeApp, getApps } from 'firebase/app'
+import { headers } from 'next/headers'
 
-export async function GET() {
-  const API_KEY = process.env.NEXT_PUBLIC_BINANCE_API_KEY
-  const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_API_SECRET
+// Initialize Firebase (if not already initialized)
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+}
 
-  if (!API_KEY || !API_SECRET) {
-    console.error('Missing API credentials:', { API_KEY: !!API_KEY, API_SECRET: !!API_SECRET })
-    return NextResponse.json(
-      { error: 'API credentials not configured' },
-      { status: 401 }
-    )
-  }
+if (!getApps().length) {
+  initializeApp(firebaseConfig)
+}
 
+export async function GET(request: NextRequest) {
   try {
+    // Get the user ID from the Authorization header
+    const headersList = headers()
+    const uid = headersList.get('authorization')
+
+    if (!uid) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    // Get user's Binance credentials from Firebase
+    const db = getDatabase()
+    const credentialsSnapshot = await get(ref(db, `users/${uid}/binance_credentials`))
+
+    if (!credentialsSnapshot.exists()) {
+      return NextResponse.json(
+        { error: 'Binance credentials not found' },
+        { status: 404 }
+      )
+    }
+
+    const credentials = credentialsSnapshot.val()
+    const API_KEY = credentials.apiKey
+    const API_SECRET = credentials.apiSecret
+
+    if (!API_KEY || !API_SECRET) {
+      console.error('Missing API credentials:', { API_KEY: !!API_KEY, API_SECRET: !!API_SECRET })
+      return NextResponse.json(
+        { error: 'API credentials not configured' },
+        { status: 401 }
+      )
+    }
+
     // First, get Binance server time to ensure our timestamp is synchronized
     const timeResponse = await fetch('https://api.binance.com/api/v3/time', {
       headers: {

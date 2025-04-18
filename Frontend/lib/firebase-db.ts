@@ -2,7 +2,6 @@ import { getDatabase, ref, set, get, push, remove, update } from "firebase/datab
 import { getAuth } from "firebase/auth";
 
 const db = getDatabase();
-const auth = getAuth();
 
 // Types
 export interface Budget {
@@ -31,6 +30,7 @@ export interface Transaction {
 
 // Helper function to get current user's reference
 const getUserRef = (path: string = '') => {
+  const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error('No user logged in');
   return ref(db, `users/${user.uid}${path}`);
@@ -38,6 +38,7 @@ const getUserRef = (path: string = '') => {
 
 // Initialize new user's data structure
 export const initializeUserData = async () => {
+  const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error('No user logged in');
 
@@ -45,9 +46,11 @@ export const initializeUserData = async () => {
     // Check if user data already exists
     const userSnapshot = await get(ref(db, `users/${user.uid}`));
     if (userSnapshot.exists()) {
+      console.log('User data already exists');
       return; // User data already initialized
     }
 
+    console.log('Initializing user data for:', user.uid);
     // Create initial data structure
     const initialData = {
       budgets: {},
@@ -60,8 +63,10 @@ export const initializeUserData = async () => {
     };
 
     await set(ref(db, `users/${user.uid}`), initialData);
+    console.log('User data initialized successfully');
     return true;
   } catch (error: any) {
+    console.error('Failed to initialize user data:', error);
     throw new Error(`Failed to initialize user data: ${error.message}`);
   }
 };
@@ -80,6 +85,7 @@ export const addBudget = async (budget: Omit<Budget, 'id' | 'budgetReached' | 'c
     await set(newBudgetRef, newBudget);
     return { id: newBudgetRef.key };
   } catch (error: any) {
+    console.error('Failed to add budget:', error);
     throw new Error(`Failed to add budget: ${error.message}`);
   }
 };
@@ -94,6 +100,7 @@ export const getBudgets = async (): Promise<Budget[]> => {
       ...(value as Omit<Budget, 'id'>)
     }));
   } catch (error: any) {
+    console.error('Failed to fetch budgets:', error);
     throw new Error(`Failed to fetch budgets: ${error.message}`);
   }
 };
@@ -102,6 +109,7 @@ export const updateBudget = async (budgetId: string, updates: Partial<Budget>) =
   try {
     await update(getUserRef(`/budgets/${budgetId}`), updates);
   } catch (error: any) {
+    console.error('Failed to update budget:', error);
     throw new Error(`Failed to update budget: ${error.message}`);
   }
 };
@@ -110,6 +118,7 @@ export const deleteBudget = async (budgetId: string) => {
   try {
     await remove(getUserRef(`/budgets/${budgetId}`));
   } catch (error: any) {
+    console.error('Failed to delete budget:', error);
     throw new Error(`Failed to delete budget: ${error.message}`);
   }
 };
@@ -128,6 +137,7 @@ export const addTransaction = async (
     await set(newTransactionRef, newTransaction);
     return { id: newTransactionRef.key };
   } catch (error: any) {
+    console.error('Failed to add transaction:', error);
     throw new Error(`Failed to add transaction: ${error.message}`);
   }
 };
@@ -142,6 +152,7 @@ export const getTransactions = async (type: 'credit' | 'debit'): Promise<Transac
       ...(value as Omit<Transaction, 'id'>)
     }));
   } catch (error: any) {
+    console.error('Failed to fetch transactions:', error);
     throw new Error(`Failed to fetch transactions: ${error.message}`);
   }
 };
@@ -154,6 +165,7 @@ export const updateTransaction = async (
   try {
     await update(getUserRef(`/${type}/${transactionId}`), updates);
   } catch (error: any) {
+    console.error('Failed to update transaction:', error);
     throw new Error(`Failed to update transaction: ${error.message}`);
   }
 };
@@ -165,6 +177,7 @@ export const deleteTransaction = async (
   try {
     await remove(getUserRef(`/${type}/${transactionId}`));
   } catch (error: any) {
+    console.error('Failed to delete transaction:', error);
     throw new Error(`Failed to delete transaction: ${error.message}`);
   }
 };
@@ -196,6 +209,7 @@ export const getUserSummary = async () => {
       totalBudgetCount: budgets.length
     };
   } catch (error: any) {
+    console.error('Failed to fetch user summary:', error);
     throw new Error(`Failed to fetch user summary: ${error.message}`);
   }
 }; 

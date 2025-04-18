@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { MerchantExpense } from '@/types/finance';
+import { memo } from 'react';
 
 interface ExpensePieChartProps {
   data: MerchantExpense[];
@@ -18,7 +19,7 @@ const COLORS = [
   '#ff7c43',
 ];
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = memo(({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-2 rounded-lg shadow-md border">
@@ -28,9 +29,11 @@ const CustomTooltip = ({ active, payload }: any) => {
     );
   }
   return null;
-};
+});
 
-export default function ExpensePieChart({ data }: ExpensePieChartProps) {
+CustomTooltip.displayName = 'CustomTooltip';
+
+function ExpensePieChart({ data }: ExpensePieChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px]">
@@ -39,12 +42,15 @@ export default function ExpensePieChart({ data }: ExpensePieChartProps) {
     );
   }
 
+  // Limit data to top 8 entries to match COLORS array
+  const limitedData = data.slice(0, 8);
+
   return (
     <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={data}
+            data={limitedData}
             cx="50%"
             cy="50%"
             labelLine={false}
@@ -52,8 +58,9 @@ export default function ExpensePieChart({ data }: ExpensePieChartProps) {
             fill="#8884d8"
             dataKey="amount"
             nameKey="merchant"
+            isAnimationActive={false}  // Disable animations for better performance
           >
-            {data.map((entry, index) => (
+            {limitedData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
@@ -66,4 +73,6 @@ export default function ExpensePieChart({ data }: ExpensePieChartProps) {
     </div>
   );
 }
+
+export default memo(ExpensePieChart);
 
