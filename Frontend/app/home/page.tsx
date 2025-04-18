@@ -431,8 +431,8 @@ export default function HomePage() {
                 I created FinanceBuddy to help people manage their finances more effectively using the power of AI and intuitive design.
               </p>
               <div className="space-y-2">
-                <p className="text-sm md:text-base text-gray-600">📧 Email: mrunalthamake9@gmail.com</p>
-                <p className="text-sm md:text-base text-gray-600">📱 Contact: +91 9834583904</p>
+                <p className="text-sm md:text-base text-gray-600">📧 Email: gondkaromkar53@gmail.com</p>
+                <p className="text-sm md:text-base text-gray-600">📱 Contact: +91 8855916700</p>
               </div>
             </div>
             <div className="space-y-4">
