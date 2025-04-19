@@ -10,7 +10,9 @@ import {
   RecaptchaVerifier,
   ConfirmationResult,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  signOut as firebaseSignOut,
+  onAuthStateChanged as firebaseAuthStateChanged
 } from 'firebase/auth'
 import { app } from './firebase'
 
@@ -45,15 +47,12 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
 }
 
 // Email/Password Sign In
-export const signInWithEmail = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string) => {
   try {
-    const result = await signInWithEmailAndPassword(auth, email, password)
-    return { user: result.user, error: null }
+    const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    return userCredential.user
   } catch (error: any) {
-    return {
-      user: null,
-      error: error.message || 'Failed to sign in with email and password'
-    }
+    throw new Error(error.message)
   }
 }
 
@@ -114,14 +113,11 @@ export const verifyPhoneCode = async (code: string) => {
 }
 
 // Sign Out
-export const signOut = async () => {
+export const logOut = async () => {
   try {
-    await auth.signOut()
-    return { error: null }
+    await firebaseSignOut(auth)
   } catch (error: any) {
-    return {
-      error: error.message || 'Failed to sign out'
-    }
+    throw new Error(error.message)
   }
 }
 
@@ -131,6 +127,5 @@ export const getCurrentUser = () => {
 }
 
 // Auth State Observer
-export const onAuthStateChanged = (callback: (user: any) => void) => {
-  return auth.onAuthStateChanged(callback)
-} 
+export const onAuthStateChanged = (callback: Parameters<typeof firebaseAuthStateChanged>[1]) => 
+  firebaseAuthStateChanged(auth, callback) 

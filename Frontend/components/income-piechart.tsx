@@ -47,6 +47,12 @@ export function IncomePieChart({ dateRange }: IncomePieChartProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!database) {
+      console.error('Firebase database not initialized')
+      setError('Database connection error')
+      return
+    }
+
     try {
       const creditRef = ref(database, 'credit')
 

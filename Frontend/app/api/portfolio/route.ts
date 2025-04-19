@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getDatabase, ref, get } from 'firebase/database'
 import { initializeApp, getApps } from 'firebase/app'
-import { headers } from 'next/headers'
 
 // Initialize Firebase (if not already initialized)
 const firebaseConfig = {
@@ -22,10 +21,9 @@ if (!getApps().length) {
 export async function GET(request: NextRequest) {
   try {
     // Get the user ID from the Authorization header
-    const headersList = headers()
-    const uid = headersList.get('authorization')
+    const authorization = request.headers.get('authorization')
 
-    if (!uid) {
+    if (!authorization) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -34,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's Binance credentials from Firebase
     const db = getDatabase()
-    const credentialsSnapshot = await get(ref(db, `users/${uid}/binance_credentials`))
+    const credentialsSnapshot = await get(ref(db, `users/${authorization}/binance_credentials`))
 
     if (!credentialsSnapshot.exists()) {
       return NextResponse.json(

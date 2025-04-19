@@ -5,7 +5,7 @@ import Image from "next/image"
 import { ArrowRight, BarChart3, Brain, CreditCard, LogOut, PiggyBank, TrendingUp, User, Download, Menu, X } from "lucide-react"
 import Script from "next/script"
 import { useEffect, useState } from "react"
-import { getCurrentUser, onAuthStateChanged, signOut } from "@/lib/firebase-auth"
+import { getCurrentUser, onAuthStateChanged, logOut } from "@/lib/firebase-auth"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -23,14 +23,10 @@ function UserProfile({ user }: { user: any }) {
 
   const handleLogout = async () => {
     try {
-      const { error: signOutError } = await signOut()
-      if (signOutError) {
-        throw new Error(signOutError)
-      }
-      localStorage.removeItem("rememberMe")
-      router.push("/login")
-    } catch (err: any) {
-      console.error("Logout error:", err)
+      await logOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error logging out:', error)
     }
   }
 

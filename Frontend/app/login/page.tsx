@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/icons"
-import { signInWithEmail, signInWithGoogle, onAuthStateChanged, getCurrentUser } from "@/lib/firebase-auth"
+import { signIn, signInWithGoogle, onAuthStateChanged, getCurrentUser } from "@/lib/firebase-auth"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -39,10 +39,7 @@ export default function LoginPage() {
     const password = formData.get("password") as string
 
     try {
-      const { user, error: signInError } = await signInWithEmail(email, password)
-      if (signInError) {
-        throw new Error(signInError)
-      }
+      const user = await signIn(email, password)
       if (user) {
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true")
@@ -61,9 +58,9 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const { user, error: signInError } = await signInWithGoogle()
-      if (signInError) {
-        throw new Error(signInError)
+      const { user, error } = await signInWithGoogle()
+      if (error) {
+        throw new Error(error)
       }
       if (user) {
         if (rememberMe) {

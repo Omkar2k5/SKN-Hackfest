@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { DollarSign, HelpCircle } from "lucide-react"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
@@ -86,10 +87,19 @@ export default function ExpensesPage() {
     <div className="flex min-h-screen flex-col">
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
-          <Link href="/home" className="flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">FinanceBuddy</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/home" className="flex items-center gap-2">
+              <Image 
+                src="/images/finance-logo.png" 
+                alt="FinanceBuddy Logo" 
+                width={40} 
+                height={40} 
+                className="object-contain"
+                priority
+              />
+              <span className="text-xl font-bold">FinanceBuddy</span>
+            </Link>
+          </div>
           <div className="ml-auto flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={handleRefresh}>
               <HelpCircle className="h-5 w-5" />

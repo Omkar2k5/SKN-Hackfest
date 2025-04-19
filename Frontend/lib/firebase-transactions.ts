@@ -1,6 +1,7 @@
-import { ref, set, push } from 'firebase/database';
-import { database } from './firebase';
-import { Transaction } from './pdf-extractor';
+import { ref, set, push, Database } from 'firebase/database';
+import { database } from '@/lib/firebase';
+import { Transaction, TransactionType } from '@/types/finance';
+import { Transaction as PDFTransaction } from '@/lib/pdf-extractor';
 
 /**
  * Store an array of transactions in Firebase
@@ -16,6 +17,11 @@ export async function storeTransactionsInFirebase(
 ): Promise<void> {
   console.log(`Storing ${transactions.length} transactions in Firebase`);
   
+  const db = database;
+  if (!db) {
+    throw new Error('Firebase database not initialized');
+  }
+
   try {
     const promises = transactions.map(async (transaction) => {
       // Determine if it's credit or debit based on amount
@@ -36,7 +42,7 @@ export async function storeTransactionsInFirebase(
       
       // Create a reference to the appropriate node
       const basePath = userId ? `users/${userId}/${type}` : type;
-      const transactionsRef = ref(database, basePath);
+      const transactionsRef = ref(db, basePath);
       
       // Use push to create a unique ID for each transaction
       const newTransactionRef = push(transactionsRef);
@@ -70,8 +76,17 @@ export async function processAndStoreTransactions(
     // Import the extractTransactions function
     const { extractTransactions } = await import('./pdf-extractor');
     
-    // Extract transactions from the text
-    const transactions = extractTransactions(text);
+    // Extract transactions from the text and convert to the correct type
+    const extractedTransactions = extractTransactions(text);
+    const transactions: Transaction[] = extractedTransactions.map(tx => ({
+      accountNumber: tx.accountNumber || 'Unknown', // Provide default value
+      amount: tx.amount,
+      merchantName: tx.merchantName,
+      timestamp: tx.timestamp,
+      transactionMode: tx.transactionMode,
+      type: tx.amount >= 0 ? 'credit' as const : 'debit' as const,
+      ...(tx.upiId ? { upiId: tx.upiId } : {}) // Only include if defined
+    }));
     
     console.log(`Extracted ${transactions.length} transactions from text`);
     
@@ -85,4 +100,47 @@ export async function processAndStoreTransactions(
     console.error('Error processing and storing transactions:', error);
     throw error;
   }
-} 
+}
+
+export const addTransaction = async (
+  transaction: Omit<Transaction, 'id' | 'timestamp'>,
+  type: TransactionType,
+  userId?: string
+) => {
+  const db = database;
+  if (!db) {
+    throw new Error('Firebase database not initialized');
+  }
+
+  try {
+    // Create a reference to the appropriate node
+    const basePath = userId ? `users/${userId}/${type}` : type;
+    const transactionsRef = ref(db, basePath);
+
+    // Use push to create a unique ID for each transaction
+    const newTransactionRef = push(transactionsRef);
+
+    // Set the data at the new ref
+    await set(newTransactionRef, {
+      ...transaction,
+      timestamp: Date.now()
+    });
+
+    return { id: newTransactionRef.key };
+  } catch (error) {
+    console.error('Error adding transaction:', error);
+    throw error;
+  }
+};
+
+export const processTransactions = (pdfTransactions: PDFTransaction[]): Omit<Transaction, 'id'>[] => {
+  return pdfTransactions.map(tx => ({
+    accountNumber: tx.accountNumber || '',
+    amount: tx.amount,
+    merchantName: tx.merchantName,
+    timestamp: tx.timestamp,
+    transactionMode: tx.transactionMode,
+    type: tx.amount > 0 ? 'credit' as const : 'debit' as const,
+    ...(tx.upiId && { upiId: tx.upiId })
+  }));
+}; 

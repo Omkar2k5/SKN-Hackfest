@@ -1,6 +1,8 @@
 import { format, parse } from 'date-fns';
 import { BankStatement, Transaction, StatementParsingResult } from './types';
 import { storeTransactionsInFirebase } from './firebase-transactions';
+import { Transaction as FinanceTransaction } from '@/types/finance';
+import { Transaction as ParsedTransaction } from '@/lib/types';
 
 /**
  * Parse a Kotak Mahindra Bank statement text and extract account details and transactions
@@ -135,7 +137,17 @@ export async function parseKotakStatement(text: string, userId?: string): Promis
     // Store transactions in Firebase if requested
     if (userId && transactions.length > 0) {
       try {
-        await storeTransactionsInFirebase(transactions, userId);
+        const financeTransactions: FinanceTransaction[] = transactions.map(tx => ({
+          accountNumber: tx.accountNumber || 'Unknown',
+          amount: tx.amount,
+          merchantName: tx.merchantName,
+          timestamp: tx.timestamp,
+          transactionMode: tx.transactionMode,
+          type: tx.amount >= 0 ? 'credit' as const : 'debit' as const,
+          ...(tx.upiId ? { upiId: tx.upiId } : {})
+        }));
+
+        await storeTransactionsInFirebase(financeTransactions, userId);
         console.log(`Stored ${transactions.length} transactions in Firebase for user ${userId}`);
       } catch (error) {
         console.error('Error storing transactions in Firebase:', error);
@@ -157,5 +169,44 @@ export async function parseKotakStatement(text: string, userId?: string): Promis
       message: 'Failed to parse statement',
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+export async function parseAndStoreStatement(
+  text: string,
+  userId?: string
+): Promise<ParsedTransaction[]> {
+  try {
+    const result = await parseKotakStatement(text, userId);
+    if (!result.success || !result.transactions) {
+      throw new Error(result.message || 'Failed to parse statement');
+    }
+
+    console.log(`Parsed ${result.transactions.length} transactions from statement`);
+
+    // Convert transactions to the finance type before storing
+    if (userId && result.transactions.length > 0) {
+      try {
+        const financeTransactions: FinanceTransaction[] = result.transactions.map((tx: ParsedTransaction) => ({
+          accountNumber: tx.accountNumber || 'Unknown',
+          amount: tx.amount,
+          merchantName: tx.merchantName,
+          timestamp: tx.timestamp,
+          transactionMode: tx.transactionMode,
+          type: tx.amount >= 0 ? 'credit' as const : 'debit' as const,
+          ...(tx.upiId ? { upiId: tx.upiId } : {})
+        }));
+
+        await storeTransactionsInFirebase(financeTransactions, userId);
+        console.log(`Stored ${result.transactions.length} transactions in Firebase for user ${userId}`);
+      } catch (error) {
+        console.error('Error storing transactions in Firebase:', error);
+      }
+    }
+
+    return result.transactions;
+  } catch (error) {
+    console.error('Error parsing statement:', error);
+    throw error;
   }
 } 

@@ -22,6 +22,16 @@ export function BudgetForm() {
     e.preventDefault()
     setIsSubmitting(true)
 
+    if (!database) {
+      toast({
+        title: "Error",
+        description: "Database not initialized. Please try again later.",
+        variant: "destructive"
+      })
+      setIsSubmitting(false)
+      return
+    }
+
     try {
       const budgetsRef = ref(database, 'budgets')
       await push(budgetsRef, {

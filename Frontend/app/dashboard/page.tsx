@@ -73,7 +73,10 @@ export default function DashboardPage() {
 
   // Update data when user changes
   useEffect(() => {
-    if (!user) return
+    if (!user || !database) {
+      console.error('User or database not initialized')
+      return
+    }
 
     try {
       const userDataRef = ref(database, `users/${user.uid}`)

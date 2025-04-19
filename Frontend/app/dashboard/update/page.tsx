@@ -58,6 +58,11 @@ export default function UpdateTransactionsPage() {
       return
     }
 
+    if (!firestore) {
+      setError('Firestore is not initialized')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
     setSuccess(null)

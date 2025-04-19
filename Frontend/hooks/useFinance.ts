@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import {
@@ -29,7 +31,7 @@ interface FinanceSummary {
 
 export const useFinance = () => {
   const auth = getAuth();
-  const user = auth.currentUser;
+  const user = auth?.currentUser;
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export const useFinance = () => {
 
   // Initialize user data if needed
   const initializeUser = async () => {
-    if (!user) return;
+    if (!user || !auth) return;
     try {
       await initializeUserData();
     } catch (err: any) {
@@ -51,7 +53,7 @@ export const useFinance = () => {
 
   // Load all data
   const loadData = async () => {
-    if (!user) {
+    if (!user || !auth) {
       setLoading(false);
       return;
     }
@@ -85,7 +87,7 @@ export const useFinance = () => {
   // Initialize user data and load data when user changes
   useEffect(() => {
     const handleUserData = async () => {
-      if (user) {
+      if (user && auth) {
         await loadData();
       } else {
         // Clear data when user logs out
@@ -102,7 +104,7 @@ export const useFinance = () => {
 
   // Budget operations
   const createBudget = async (budget: Omit<Budget, 'id' | 'budgetReached' | 'createdAt' | 'isActive' | 'spent'>) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await addBudget(budget);
       await loadData();
@@ -114,7 +116,7 @@ export const useFinance = () => {
   };
 
   const modifyBudget = async (budgetId: string, updates: Partial<Budget>) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await updateBudget(budgetId, updates);
       await loadData();
@@ -126,7 +128,7 @@ export const useFinance = () => {
   };
 
   const removeBudget = async (budgetId: string) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await deleteBudget(budgetId);
       await loadData();
@@ -142,7 +144,7 @@ export const useFinance = () => {
     transaction: Omit<Transaction, 'id' | 'timestamp'>,
     type: 'credit' | 'debit'
   ) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await addTransaction(transaction, type);
       await loadData();
@@ -158,7 +160,7 @@ export const useFinance = () => {
     type: 'credit' | 'debit',
     updates: Partial<Transaction>
   ) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await updateTransaction(transactionId, type, updates);
       await loadData();
@@ -170,7 +172,7 @@ export const useFinance = () => {
   };
 
   const removeTransaction = async (transactionId: string, type: 'credit' | 'debit') => {
-    if (!user) throw new Error('No user logged in');
+    if (!user || !auth) throw new Error('No user logged in');
     try {
       await deleteTransaction(transactionId, type);
       await loadData();
